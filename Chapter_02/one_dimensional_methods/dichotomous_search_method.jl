@@ -1,5 +1,5 @@
 """
-    dichotomous_search(f, a, b, ε, δ; N=1000)
+    dichotomous_search(f, a, b, ε[, δ]; N=1000)
 
 Implements the dichotomous search method for finding the minimum of a unimodal function
 on interval [a,b].
@@ -9,7 +9,9 @@ Parameters:
 - `a`: Left endpoint of the interval
 - `b`: Right endpoint of the interval
 - `ε`: Tolerance for the interval length
-- `δ`: Small positive number for generating two interior points (δ < ε/2)
+- `δ`: Small positive number for generating two interior points. If not provided,
+       defaults to min(ε/4, (b-a)/1000). Must satisfy:
+       δ ≥ eps() * max(1, abs(b-a)) and δ ∈ (0, (b-a)/2), where eps() is machine epsilon.
 - `N`: Maximum number of iterations (default: 1000)
 
 Returns:
@@ -18,9 +20,21 @@ Returns:
 - `iterations`: Number of iterations performed
 - `history`: Vector of tuples containing (a, b, x₋, x₊, f₋, f₊) for each iteration
 """
-function dichotomous_search(f, a, b, ε, δ; N=1000)
-    if δ >= ε/2
-        error("δ must be smaller than ε/2")
+function dichotomous_search(f, a, b, ε, δ=nothing; N=1000)
+    # Set default value for δ if not provided
+    if isnothing(δ)
+        δ = min(ε/4, (b-a)/1000)
+    end
+    
+    # Check if δ is in the valid range
+    if δ <= 0 || δ >= (b-a)/2
+        error("δ must be in the interval (0, (b-a)/2)")
+    end
+    
+    # Check if δ is large enough to avoid numerical issues
+    scale = max(1, abs(b-a))
+    if δ < eps() * scale
+        error("δ must be at least eps() * max(1, |b-a|) to avoid numerical issues")
     end
     
     history = []
@@ -37,6 +51,11 @@ function dichotomous_search(f, a, b, ε, δ; N=1000)
         # Evaluate function at both points
         f₋ = f(x₋)
         f₊ = f(x₊)
+        
+        # Check for non-finite function values
+        if !isfinite(f₋) || !isfinite(f₊)
+            error("Function evaluation resulted in non-finite value at x₋ = $x₋ or x₊ = $x₊")
+        end
         
         # Store current state in history
         push!(history, (a, b, x₋, x₊, f₋, f₊))
@@ -66,10 +85,10 @@ function example()
     # Parameters
     a, b = -5.0, 5.0  # Initial interval
     ε = 1e-4          # Tolerance for interval length
-    δ = ε/4           # Small positive number (δ < ε/2)
+    # δ will be automatically set to min(ε/4, (b-a)/1000)
     
     # Run the algorithm
-    x_min, f_min, iterations, history = dichotomous_search(f, a, b, ε, δ)
+    x_min, f_min, iterations, history = dichotomous_search(f, a, b, ε)
     
     println("Results:")
     println("x_min = ", x_min)
@@ -78,5 +97,5 @@ function example()
     println("Final interval length: ", abs(history[end][2] - history[end][1]))
 end
 
-# Uncomment to run the example
+# Run the example
 example()
