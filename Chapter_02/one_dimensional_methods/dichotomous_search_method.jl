@@ -21,6 +21,11 @@ Returns:
 - `history`: Vector of tuples containing (a, b, x₋, x₊, f₋, f₊) for each iteration
 """
 function dichotomous_search(f, a, b, ε, δ=nothing; N=1000)
+    # Check if endpoints give finite values
+    if !isfinite(f(a)) || !isfinite(f(b))
+        error("Function evaluation resulted in non-finite value at endpoint(s)")
+    end
+    
     # Set default value for δ if not provided
     if isnothing(δ)
         δ = min(ε/4, (b-a)/1000)

@@ -1,3 +1,8 @@
+"""
+Unit tests for the Dichotomous Search optimization method.
+Includes tests for correctness, edge cases,  error handling, numerical stability, and different δ values.
+"""
+
 using Test
 
 include("dichotomous_search_method.jl")
@@ -34,7 +39,7 @@ include("dichotomous_search_method.jl")
         # Test too large δ
         @test_throws ErrorException dichotomous_search(f, -5.0, 5.0, 1e-6, 6.0)
         # Test non-finite function values
-        g(x) = 1/x
+        g(x) = log(0.0)  # This will return -Inf for any input
         @test_throws ErrorException dichotomous_search(g, -1.0, 1.0, 1e-6)
     end
 
