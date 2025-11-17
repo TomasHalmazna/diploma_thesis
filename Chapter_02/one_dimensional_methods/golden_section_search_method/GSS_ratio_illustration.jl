@@ -46,8 +46,8 @@ annotate!([
     (x_plus, -0.05, text(L"x_k^{+}", 10)),
     (x_minus, -0.05, text(L"x_k^{-}", 10)),
     (b_prev, -0.05, text(L"b_{k-1}", 10)),
-    ((a_prev + x_plus)/2, 0.22, text(L"x_k^{-} - a_{k-1}", 10)),
-    (x_plus + (b_prev - x_plus)/2, 0.22, text(L"b_{k-1} - x_k^{-}", 10)),
+    ((a_prev + x_plus)/2, 0.22, text(L"x_k^{+} - a_{k-1}", 10)),
+    (x_plus + (b_prev - x_plus)/2, 0.22, text(L"b_{k-1} - x_k^{+}", 10)),
     ((a_prev + x_plus)/2, 0.10, text("larger part", 10)),
     (x_plus + (b_prev - x_plus)/2, 0.11, text("smaller part", 10))
 ])

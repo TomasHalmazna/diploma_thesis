@@ -45,7 +45,7 @@ Parameters:
 - `a`: Left endpoint of the interval
 - `b`: Right endpoint of the interval
 - `ε`: Tolerance for the interval length
-- `filename`: Base name for output files (default: "dichotomous_search")
+- `filename`: Base name for output files (default: "golden_section_search")
 - `fps`: Frames per second in the animation (default: 1)
 
 Returns:
@@ -106,7 +106,7 @@ function visualize_search(f, a, b, ε; filename="golden_section_search", fps=1)
         scatter!([x̄], [f̄],
                 markersize=6,
                 color=:red,
-            label=L"x^{\star}")
+            label=L"\bar{x}")
 
 
         
@@ -238,17 +238,20 @@ end
 println("Generating GSS visualizations...")
 println()
 
-plot_convergence()
-plot_function_with_iterations()
-plot_convergence_comparison()
+#plot_convergence()
+#plot_function_with_iterations()
+#plot_convergence_comparison()
 
-f_test(x) = (x-0.3)^2 + 0.1
-visualize_search(f_test, 0.0, 1.0, 1e-6; filename="gss_test", fps=1)
+#f_test(x) = (x-0.3)^2 + 0.1
+#visualize_search(f_test, 0.0, 1.0, 1e-6; filename="gss_test", fps=1)
 
-println()
+generate_example_visualizations()
+
+#println()
 println("All visualizations complete!")
 println("Generated files:")
-println("  - gss_convergence.png")
-println("  - gss_iterations.png")
-println("  - gss_comparison.png")
-println("  - gss_test.gif and PDF frames in 'frames/'")
+#println("  - gss_convergence.png")
+#println("  - gss_iterations.png")
+#println("  - gss_comparison.png")
+#println("  - gss_test.gif and PDF frames in 'frames/'")
+println("  - gifs and PDF frames in 'frames/'")
