@@ -2,18 +2,18 @@ using Plots
 using LaTeXStrings
 
 # ==========================================================================
-# 1. QUADRATIC INTERPOLATION SEARCH CORE ALGORITHM
+# 1. QUADRATIC FIT SEARCH CORE ALGORITHM
 # ==========================================================================
 
 """
-    quadratic_interpolation_search_step(f, a, γ, b, y_a, y_γ, y_b)
+    quadratic_fit_search_step(f, a, γ, b, y_a, y_γ, y_b)
 
 Calculates the minimum (x_star) of the quadratic polynomial P(x) interpolating the points
 (a, y_a), (γ, y_γ), and (b, y_b).
 
 Returns: (x_star, D, N_num), where D is the denominator and N_num is the numerator.
 """
-function quadratic_interpolation_search_step(a::Float64, γ::Float64, b::Float64, y_a::Float64, y_γ::Float64, y_b::Float64)
+function quadratic_fit_search_step(a::Float64, γ::Float64, b::Float64, y_a::Float64, y_γ::Float64, y_b::Float64)
     # Denominator (D) and Numerator (N_num) of the x* formula:
     D = y_a * (γ - b) + y_γ * (b - a) + y_b * (a - γ)
     N_num = y_a * (γ^2 - b^2) + y_γ * (b^2 - a^2) + y_b * (a^2 - γ^2)
@@ -47,14 +47,14 @@ function quadratic_fit_history(f, a::Float64, b::Float64; N::Int=10, tol::Float6
     # Store: (a, γ, b, y_a, y_γ, y_b, x*, y*, p0, p1, p2, is_valid_step)
     history = []
     
-    for k = 1:N
+    for k = 1:N-3
         # Check for convergence based on interval length
         if (b - a) < tol
              break
         end
 
         # --- 1. Compute interpolation point x* ---
-        x_star, D, N_num = quadratic_interpolation_search_step(a, γ, b, y_a, y_γ, y_b)
+        x_star, D, N_num = quadratic_fit_search_step(a, γ, b, y_a, y_γ, y_b)
         
         is_valid_step = true
 
@@ -227,20 +227,22 @@ end
 
 # New example function resembling the image (a cubic polynomial)
 # It has a local minimum around x=0.58 and x=1.42
-f_new_example(x) = (x-1.5)^3 + 3.0*(x-1.5)^2 + (x-1.5)
+#f_new_example(x) = (x-1.5)^3 + 3.0*(x-1.5)^2 + (x-1.5)
+
+f_new_example(x) = 5*exp(x)*sin(x)
 
 # Initial interval for the new function
-a_init_new = 0.0
-b_init_new = 3.0
+a_init_new = -3.0
+b_init_new = 0.0
 
 # Max number of iterations for the visualization
-N_max = 10 
+N_max = 20 
 
-println("Generating Quadratic Fit Search visualizations for the new function (N=$N_max)...")
+println("Generating Quadratic Fit Search visualizations for the function (N=$N_max)...")
 
-visualize_quadratic_search(f_new_example, a_init_new, b_init_new, N_max, filename="qis_cubic_example", fps=1)
+visualize_quadratic_search(f_new_example, a_init_new, b_init_new, N_max, filename="qfs_example", fps=1)
 
 println("All QIS visualizations complete!")
 println("Generated files:")
-println("  - qis_cubic_example.gif")
-println("  - PDF frames in 'qis_cubic_example_frames/'")
+println("  - qfs_example.gif")
+println("  - PDF frames in 'qfs_example_frames/'")
