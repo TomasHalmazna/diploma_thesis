@@ -8,24 +8,24 @@ using LaTeXStrings
 """
     quadratic_fit_search_step(f, a, γ, b, y_a, y_γ, y_b)
 
-Calculates the minimum (x_star) of the quadratic polynomial P(x) interpolating the points
+Calculates the minimum (x_est) of the quadratic polynomial P(x) interpolating the points
 (a, y_a), (γ, y_γ), and (b, y_b).
 
-Returns: (x_star, D, N_num), where D is the denominator and N_num is the numerator.
+Returns: (x_est, D, N_num), where D is the denominator and N_num is the numerator.
 """
 function quadratic_fit_search_step(a::Float64, γ::Float64, b::Float64, y_a::Float64, y_γ::Float64, y_b::Float64)
-    # Denominator (D) and Numerator (N_num) of the x* formula:
+    # Denominator (D) and Numerator (N_num) of the x_est formula:
     D = y_a * (γ - b) + y_γ * (b - a) + y_b * (a - γ)
     N_num = y_a * (γ^2 - b^2) + y_γ * (b^2 - a^2) + y_b * (a^2 - γ^2)
     
     # Handle degenerate parabola (D near zero)
     if abs(D) < 1e-12
-        x_star = (a + b) / 2.0 # Return midpoint as fallback
+        x_est = (a + b) / 2.0 # Return midpoint as fallback
     else
-        x_star = 0.5 * N_num / D
+        x_est = 0.5 * N_num / D
     end
     
-    return x_star, D, N_num
+    return x_est, D, N_num
 end
 
 
@@ -33,39 +33,45 @@ end
     quadratic_fit_history(f, a::Float64, b::Float64; N::Int=10, tol::Float64=1e-8)
 
 Helper function to run QIS and record the state of the search for visualization.
+The search is limited such that the total number of function evaluations does not exceed N.
+Since 3 evaluations occur before the loop, the loop runs for at most N-3 iterations.
 
 Returns a list of tuples containing:
-(a, γ, b, y_a, y_γ, y_b, x*, y*, p0, p1, p2, is_valid_step)
+(a, γ, b, y_a, y_γ, y_b, x_est, y_est, p0, p1, p2, is_valid_step)
 where p0, p1, p2 are coefficients of the interpolating parabola P(x) = p2*x^2 + p1*x + p0.
 """
 function quadratic_fit_history(f, a::Float64, b::Float64; N::Int=10, tol::Float64=1e-8)
+    # 3 function evaluations are used here: f(a), f(γ), f(b)
     γ = (a + b) / 2.0
     y_a = f(a)
     y_γ = f(γ)
     y_b = f(b)
     
-    # Store: (a, γ, b, y_a, y_γ, y_b, x*, y*, p0, p1, p2, is_valid_step)
+    # Store: (a, γ, b, y_a, y_γ, y_b, x_est, y_est, p0, p1, p2, is_valid_step)
     history = []
     
-    for k = 1:N-3
+    # Run for a maximum of N-3 iterations (since 3 evaluations already occurred)
+    max_iterations = N > 3 ? N - 3 : 0
+    for k = 1:max_iterations
         # Check for convergence based on interval length
         if (b - a) < tol
              break
         end
 
-        # --- 1. Compute interpolation point x* ---
-        x_star, D, N_num = quadratic_fit_search_step(a, γ, b, y_a, y_γ, y_b)
+        # --- 1. Compute interpolation point x_est ---
+        x_est, D, N_num = quadratic_fit_search_step(a, γ, b, y_a, y_γ, y_b)
         
         is_valid_step = true
 
-        # Check for break condition (minimum outside bracket or invalid x*)
-        if abs(D) < 1e-12 || x_star <= a || x_star >= b
+        # Check for break condition (minimum outside bracket or invalid x_est)
+        if abs(D) < 1e-12 || x_est <= a || x_est >= b
             is_valid_step = false
         end
         
-        y_star = f(x_star)
+        # --- 2. Evaluate f(x_est) (1 function evaluation) ---
+        y_est = f(x_est)
 
-        # --- 2. Compute Parabola Coefficients P(x) = p2*x^2 + p1*x + p0 for Plotting ---
+        # --- 3. Compute Parabola Coefficients P(x) = p2*x^2 + p1*x + p0 for Plotting ---
         K = (a-γ) * (a-b) * (γ-b)
         
         # Calculate coefficients carefully, handling the D=0 case for plotting the parabola
@@ -74,32 +80,32 @@ function quadratic_fit_history(f, a::Float64, b::Float64; N::Int=10, tol::Float6
         p0 = y_a - p2 * a^2 - p1 * a
 
         # Store current state before updating a, γ, b
-        push!(history, (a, γ, b, y_a, y_γ, y_b, x_star, y_star, p0, p1, p2, is_valid_step))
+        push!(history, (a, γ, b, y_a, y_γ, y_b, x_est, y_est, p0, p1, p2, is_valid_step))
         
-        # --- 3. Update the interval ---
+        # --- 4. Update the interval ---
         if !is_valid_step
              break
         end
 
-        if x_star > γ
-            if y_star >= y_γ
-                b = x_star
-                y_b = y_star
+        if x_est > γ
+            if y_est >= y_γ
+                b = x_est
+                y_b = y_est
             else
                 a = γ
                 y_a = y_γ
-                γ = x_star
-                y_γ = y_star
+                γ = x_est
+                y_γ = y_est
             end
         else
-            if y_star >= y_γ
-                a = x_star
-                y_a = y_star
+            if y_est >= y_γ
+                a = x_est
+                y_a = y_est
             else
                 b = γ
                 y_b = y_γ
-                γ = x_star
-                y_γ = y_star
+                γ = x_est
+                y_γ = y_est
             end
         end
     end
@@ -112,12 +118,12 @@ end
 # ==========================================================================
 
 """
-    visualize_quadratic_search(f, a, b, N; filename="quadratic_fit_search", fps=1)
+    visualize_quadratic_search(f, f_expr, a, b, N; filename="quadratic_fit_search", fps=1)
 
 Create an animation showing the progress of the Quadratic Interpolation Search method.
-Saves both vector graphics (PDF) of each frame and the final GIF animation.
+The function expression `f_expr` is used in the plot legend.
 """
-function visualize_quadratic_search(f, a_init, b_init, N; filename="quadratic_fit_search", fps=1)
+function visualize_quadratic_search(f, f_expr::String, a_init, b_init, N; filename="quadratic_fit_search", fps=1)
     # Collect history
     history = quadratic_fit_history(f, a_init, b_init; N=N)
     
@@ -141,7 +147,7 @@ function visualize_quadratic_search(f, a_init, b_init, N; filename="quadratic_fi
     frames = []
     
     for i in 1:length(history)
-        a_i, γ_i, b_i, y_a, y_γ, y_b, x_star, y_star, p0, p1, p2, is_valid_step = history[i]
+        a_i, γ_i, b_i, y_a, y_γ, y_b, x_est, y_est, p0, p1, p2, is_valid_step = history[i]
         
         # The fitted quadratic polynomial
         P(x) = p2 * x^2 + p1 * x + p0
@@ -149,12 +155,13 @@ function visualize_quadratic_search(f, a_init, b_init, N; filename="quadratic_fi
         # Create the main plot
         p = plot(x_range_init, f.(x_range_init), 
                  linewidth=3, 
-                 label=L"f(x)",
+                 # Include function expression in the LaTeX label
+                 label=L"f(x) = %$f_expr", 
                  title=L"Quadratic\ Fit\ Search:\ Iteration\ %$i",
                  xlabel=L"x",
                  ylabel=L"f(x)",
                  ylims=y_lims,
-                 legend=:topright)
+                 legend=(0.77, 0.95)) 
         
         # Plot the interpolating parabola
         plot!(x_range_init, P.(x_range_init), 
@@ -170,32 +177,26 @@ function visualize_quadratic_search(f, a_init, b_init, N; filename="quadratic_fi
                  markerstrokecolor=:black,
                  label=L"a, \gamma, b")
         
-        # Plot the proposed minimum x*
+        # Plot the proposed minimum \bar{x} 
         if is_valid_step
-             scatter!(p, [x_star], [y_star],
-                      markershape=:star5,
-                      markersize=10,
+             scatter!(p, [x_est], [y_est],
+                      markershape=:circle, # Consistent circle marker
+                      markersize=8,        # Consistent marker size
                       color=:red,
                       markerstrokecolor=:black,
-                      label=L"x^\star")
-             # Mark the y* line
-             plot!([x_star, x_star], [y_lims[1], y_star], linestyle=:dot, color=:red, linewidth=1, label=false)
+                      label=L"\bar{x}")
+             # Mark the y_est line
+             plot!([x_est, x_est], [y_lims[1], y_est], linestyle=:dot, color=:red, linewidth=1, label=false)
 
         else
              annotate!(a_init, y_lims[2] - y_padding/1.5, 
-                       text(L"Algorithm\ Terminated:\ x^\star\ was\ outside\ [a,b]",
+                       text(L"Algorithm\ Terminated:\ \bar{x}\ was\ outside\ [a,b]",
                             :left, 10, :red))
         end
         
-        # Plot current search interval
-        plot!([a_i, b_i], [y_lims[1] + y_padding/4, y_lims[1] + y_padding/4],
-              linewidth=4,
-              color=:steelblue,
-              label=L"Search\ Interval\ [a, b]")
-        
         # Add iteration information
         interval_length = b_i - a_i
-        annotate!(a_init, y_lims[2] - y_padding/3, 
+        annotate!(a_init, y_lims[2] - y_padding/3,
                   text(L"Current\ Interval\ Length:\ %$(round(interval_length, digits=6))",
                        :left, 10))
         
@@ -221,28 +222,23 @@ end
 # 3. EXAMPLE USAGE
 # ==========================================================================
 
-# A suitable unimodal function where QIS works well
-# f(x) = 0.5x^2 - sin(x) has a minimum near x ≈ 0.824
-# f_example(x) = 0.5 * x^2 - sin(x)
-
-# New example function resembling the image (a cubic polynomial)
-# It has a local minimum around x=0.58 and x=1.42
-#f_new_example(x) = (x-1.5)^3 + 3.0*(x-1.5)^2 + (x-1.5)
-
-f_new_example(x) = 5*exp(x)*sin(x)
+f_example(x) = 5*exp(x)*sin(x)
+# Function expression formatted for LaTeX display
+f_expr = "5e^x \\sin(x)" 
 
 # Initial interval for the new function
-a_init_new = -3.0
-b_init_new = 0.0
+a_init = -3.0
+b_init = 0.0
 
-# Max number of iterations for the visualization
+# Max number of iterations (function evaluations) for the visualization
+# N=20 means 3 initial evaluations + 17 loop iterations
 N_max = 20 
 
 println("Generating Quadratic Fit Search visualizations for the function (N=$N_max)...")
 
-visualize_quadratic_search(f_new_example, a_init_new, b_init_new, N_max, filename="qfs_example", fps=1)
+visualize_quadratic_search(f_example, f_expr, a_init, b_init, N_max, filename="qfs_example", fps=1)
 
-println("All QIS visualizations complete!")
+println("All QDS visualizations complete!")
 println("Generated files:")
 println("  - qfs_example.gif")
 println("  - PDF frames in 'qfs_example_frames/'")
