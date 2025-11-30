@@ -68,7 +68,7 @@ function quadratic_fit_history(f, a::Float64, b::Float64; N::Int=10, tol::Float6
             is_valid_step = false
         end
         
-        # --- 2. Evaluate f(x_est) (1 function evaluation) ---
+        # --- 2. Evaluate f(x_est) ---
         y_est = f(x_est)
 
         # --- 3. Compute Parabola Coefficients P(x) = p2*x^2 + p1*x + p0 for Plotting ---
@@ -180,8 +180,8 @@ function visualize_quadratic_search(f, f_expr::String, a_init, b_init, N; filena
         # Plot the proposed minimum \bar{x} 
         if is_valid_step
              scatter!(p, [x_est], [y_est],
-                      markershape=:circle, # Consistent circle marker
-                      markersize=8,        # Consistent marker size
+                      markershape=:circle, 
+                      markersize=8,        
                       color=:red,
                       markerstrokecolor=:black,
                       label=L"\bar{x}")
