@@ -1,7 +1,8 @@
 """
     brents_method(f, a, b, ε; t=1e-8, N=100)
 
-Implements Brent's method returning full history of points (a, b, x, w, v, u).
+Implements Brent's method.
+Returns history as: (a, b, x, w, v, fx, u, fu, is_qfs)
 """
 function brents_method(f, a, b, ε; t=1e-8, N=100)
     K = (3 - sqrt(5)) / 2
@@ -20,9 +21,9 @@ function brents_method(f, a, b, ε; t=1e-8, N=100)
         tol = ε * abs(x) + t
         t2 = 2 * tol
         
-        # 1. Save state BEFORE calculation (u is unknown = NaN)
-        # We store (a, b, x, w, v, fx, NaN, NaN)
-        push!(history, (a, b, x, w, v, fx, NaN, NaN))
+        # 1. Save state BEFORE calculation
+        # Added 'false' at the end as placeholder for is_qfs
+        push!(history, (a, b, x, w, v, fx, NaN, NaN, false))
         
         if abs(x - m) <= t2 - 0.5 * (b - a)
             break
@@ -33,7 +34,6 @@ function brents_method(f, a, b, ε; t=1e-8, N=100)
         d_new = 0.0
         iter_gss = true 
         
-        # ... (QFS logic remains the same) ...
         if abs(e) > tol
             r = (x - w) * (fx - fv)
             q = (x - v) * (fx - fw)
@@ -67,9 +67,9 @@ function brents_method(f, a, b, ε; t=1e-8, N=100)
         
         fu = f(u)
         
-        # 2. Update the LAST entry with actual u and fu
-        # Tuple format: (a, b, x, w, v, fx, u, fu)
-        history[end] = (a, b, x, w, v, fx, u, fu)
+        # 2. Update the LAST entry with actual u, fu AND method type
+        # !iter_gss means QFS was used
+        history[end] = (a, b, x, w, v, fx, u, fu, !iter_gss)
         
         # Update brackets
         if fu <= fx
@@ -87,6 +87,7 @@ function brents_method(f, a, b, ε; t=1e-8, N=100)
             end
         end
     end
+
     
     return x, fx, iterations, history
 end
