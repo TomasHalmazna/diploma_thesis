@@ -1,6 +1,7 @@
 using Plots
 using LaTeXStrings
 
+# Load the algorithm
 include("brents_method.jl")
 
 """
@@ -92,14 +93,29 @@ function visualize_brent(f, a, b, ε; filename="brents_search", fps=1)
     return anim
 end
 
-# --- EXAMPLE USAGE ---
-function run_brent_example()
-    # Example function
-    f(x) = (x - 2)^2 + 1
-    
-    # Visualize
-    visualize_brent(f, 0.0, 5.0, 1e-4, filename="brent_example")
+# --- COMPLEX EXAMPLES ---
+
+function run_complex_examples()
+    println("Generating animations...")
+
+    # Example 1: Oscillating function ("Humpy")
+    # Forces the algorithm to switch between GSS (hitting a bump) and QFS (in the valley)
+    f1(x) = 0.5*(x-2)^2 - 0.5*cos(4*x)
+    visualize_brent(f1, 0.0, 5.0, 1e-4, filename="brent_oscillating")
+    println("- brent_oscillating.gif created")
+
+    # Example 2: Asymmetric function
+    # Minimum is not centered, parabola must adapt
+    f2(x) = x * cos(x)
+    visualize_brent(f2, 0.0, 5.0, 1e-4, filename="brent_asymmetric")
+    println("- brent_asymmetric.gif created")
+
+    # Example 3: Witch of Agnesi (Inverted Bell curve)
+    # Has inflection points changing convexity -> challenging for parabola
+    f3(x) = -1 / (1 + (x - 3)^2)
+    visualize_brent(f3, -2.0, 8.0, 1e-4, filename="brent_bell")
+    println("- brent_bell.gif created")
 end
 
-# Uncomment to run
-run_brent_example()
+# Run the examples
+run_complex_examples()
