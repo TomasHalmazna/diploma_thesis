@@ -1,5 +1,6 @@
 using Plots
 using LaTeXStrings
+using Measures # Required for margin adjustments
 
 # Load the algorithm
 include("brents_method.jl")
@@ -7,115 +8,123 @@ include("brents_method.jl")
 """
     visualize_brent(f, a, b, ε; filename="brents_search", fps=1)
 
-Create an animation showing the progress of Brent's method using the same visual style
-as the dichotomous search example (Blue function, Red interval/minimum).
+Visualizes Brent's method with refined aesthetics matching QFS examples:
+- Italicized title and text info
+- Adjusted margins to prevent label clipping
+- Blue function line, Red interval, Bullseye point markers
 """
-function visualize_brent(f, a, b, ε; filename="brents_search", fps=1)
-    # Run the optimization
+function visualize_brent(f, a, b, ε; filename="brent_full", fps=1)
+    # Run the algorithm
     x_min, f_min, iterations, history = brents_method(f, a, b, ε)
     
-    # Create directory for frames
-    frames_dir = "frames_brent"
+    # Setup directory
+    frames_dir = "frames_$(filename)"
     if !isdir(frames_dir)
         mkdir(frames_dir)
     end
     
-    # Set default plot settings consistent with previous examples
-    default(size=(800,600), dpi=300, framestyle=:box)
+    # Plot settings
+    # Increased DPI for crisp text, added margins
+    default(size=(900, 600), dpi=300, framestyle=:box, legendfontsize=9)
     
     # Determine axes limits
-    # We create a range slightly larger than initial [a,b] for better view
-    margin = (b - a) * 0.1
-    x_range = range(a - margin, b + margin, length=300)
+    margin_x = (b - a) * 0.1
+    x_range = range(a - margin_x, b + margin_x, length=400)
     y_values = f.(x_range)
     y_min, y_max = minimum(y_values), maximum(y_values)
-    y_padding = (y_max - y_min) * 0.15
+    y_span = y_max - y_min
+    y_padding = y_span * 0.2
     
     frames = []
     
     for i in 1:length(history)
-        # Unpack state
-        # a_i, b_i: current bracket
-        # x_i, fx_i: current best estimate
-        # u_i, fu_i: the trial point calculated in this step
-        a_i, b_i, x_i, fx_i, u_i, fu_i = history[i]
+        # Unpack FULL state
+        a_i, b_i, x_i, w_i, v_i, fx_i, u_i, fu_i = history[i]
         
-        # 1. Main Plot (Blue function line)
+        # Calculate function values for w and v
+        fw_i = f(w_i)
+        fv_i = f(v_i)
+        
+        # 1. Main Plot Setup
         p = plot(x_range, f.(x_range), 
-                linewidth=2, 
-                color=:royalblue,   # Matches your request "funkce modře"
+                linewidth=2.5, 
+                color=:royalblue,   # Blue function line
+                alpha=0.8,
                 label=L"f(x)",
-                title="Brent's Method: Iteration $i",
-                xlabel=L"x",
+                # Title in Italics using LaTeX
+                title=L"\textit{Brent's\ Method:\ Iteration\ %$i}",
+                xlabel=L"x", 
                 ylabel=L"f(x)",
                 ylims=(y_min - y_padding, y_max + y_padding),
-                legend=:topright)
+                xlims=(a - margin_x, b + margin_x),
+                legend=:topright,
+                # Margins to prevent label clipping
+                left_margin=10mm, 
+                right_margin=5mm,
+                bottom_margin=5mm,
+                top_margin=5mm) 
         
-        # 2. Search Interval (Red line at bottom)
+        # 2. Search Interval (Red Line)
         plot!([a_i, b_i], [y_min - y_padding/2, y_min - y_padding/2], 
-              linewidth=3, 
-              color=:red,           # Matches your request "interval červeně"
-              label="Search Interval")
+              linewidth=4, color=:red, label="Interval [a,b]")
         
-        # 3. Current Estimate x (Red dot)
-        scatter!([x_i], [fx_i],
-                markersize=7,
-                color=:red,         # Matches your request "odhad červeně"
-                label=L"\bar{x}\ (current\ min)")
+        # 3. Points v, w, x (Layered Bullseye Strategy)
+        # Draw v (largest, back)
+        scatter!([v_i], [fv_i], 
+                markersize=14, color=:lightblue, markerstrokecolor=:blue,
+                label=L"v\ (prev\ best)")
         
-        # 4. Trial Point u (Orange/Gold star - optional but helpful for animation)
-        # If u_i is finite (it is NaN for the very first setup step sometimes)
+        # Draw w (medium, middle)
+        scatter!([w_i], [fw_i], 
+                markersize=10, color=:lightgreen, markerstrokecolor=:green,
+                label=L"w\ (2nd\ best)")
+        
+        # Draw x (smallest, front)
+        scatter!([x_i], [fx_i], 
+                markersize=6, color=:red, markerstrokecolor=:black,
+                label=L"x\ (best)")
+                
+        # 4. Trial point u (Gold Star)
         if !isnan(u_i)
-             scatter!([u_i], [fu_i],
-                markersize=8,
-                shape=:star5,
-                color=:orange,
-                label=L"u\ (new\ trial)")
+             scatter!([u_i], [fu_i], 
+                markersize=11, shape=:star5, color=:gold, markerstrokecolor=:black,
+                label=L"u\ (trial)")
+             
+             # Drop line
+             plot!([u_i, u_i], [y_min - y_padding/2, fu_i], 
+                   linestyle=:dot, color=:gray, label="")
         end
 
-        # Add text annotation for interval length
-        interval_len = b_i - a_i
-        annotate!(a - margin, y_max + y_padding/2, 
-                 text("Interval length: $(round(interval_len, digits=6))", :left, 8))
+        # Text Info (Interval Length)
+        # Position: Top-Left but shifted slightly right to avoid border collision
+        plot_width = (b + margin_x) - (a - margin_x)
+        text_x_pos = (a - margin_x) + (plot_width * 0.02) # 2% offset from left edge
         
-        # Save frame
-        savefig(p, joinpath(frames_dir, "$(filename)_frame_$i.pdf"))
+        annotate!(text_x_pos, y_max + y_padding*0.8, 
+                 text(L"\textit{Interval\ length:\ %$(round(b_i - a_i, digits=6))}", :left, 10, :black))
+        
+        savefig(p, joinpath(frames_dir, "frame_$i.pdf"))
         push!(frames, p)
     end
     
-    # Generate GIF
     anim = Animation()
-    for p in frames
-        frame(anim, p)
-    end
+    for p in frames; frame(anim, p); end
     gif(anim, "$(filename).gif", fps=fps)
-    
-    return anim
 end
 
-# --- COMPLEX EXAMPLES ---
-
-function run_complex_examples()
+# --- RUN EXAMPLES ---
+function run_all()
     println("Generating animations...")
-
-    # Example 1: Oscillating function ("Humpy")
-    # Forces the algorithm to switch between GSS (hitting a bump) and QFS (in the valley)
-    f1(x) = 0.5*(x-2)^2 - 0.5*cos(4*x)
-    visualize_brent(f1, 0.0, 5.0, 1e-4, filename="brent_oscillating")
-    println("- brent_oscillating.gif created")
-
-    # Example 2: Asymmetric function
-    # Minimum is not centered, parabola must adapt
+    
+    # 1. Asymmetric function 
     f2(x) = x * cos(x)
-    visualize_brent(f2, 0.0, 5.0, 1e-4, filename="brent_asymmetric")
-    println("- brent_asymmetric.gif created")
-
-    # Example 3: Witch of Agnesi (Inverted Bell curve)
-    # Has inflection points changing convexity -> challenging for parabola
-    f3(x) = -1 / (1 + (x - 3)^2)
-    visualize_brent(f3, -2.0, 8.0, 1e-4, filename="brent_bell")
-    println("- brent_bell.gif created")
+    visualize_brent(f2, 0.0, 5.0, 1e-4, filename="brent_full_asymmetric")
+    println("- brent_full_asymmetric.gif created")
+    
+    # 2. Oscillating function
+    f1(x) = 0.5*(x-2)^2 - 0.5*cos(4*x)
+    visualize_brent(f1, 0.0, 5.0, 1e-4, filename="brent_full_oscillating")
+    println("- brent_full_oscillating.gif created")
 end
 
-# Run the examples
-run_complex_examples()
+run_all()
