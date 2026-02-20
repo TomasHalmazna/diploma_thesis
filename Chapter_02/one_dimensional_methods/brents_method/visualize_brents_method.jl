@@ -10,7 +10,7 @@ include("brents_method.jl")
 
 Visualizes Brent's method including the fitting parabola (dashed line) whenever QFS is used.
 """
-function visualize_brent(f, a, b, ε; filename="brent_full", fps=1, title_text="")
+function visualize_brent(f, a, b, ε; filename="brent_full", fps=1, title_text="", domain_min=-Inf)
     x_min, f_min, iterations, history = brents_method(f, a, b, ε)
     
     frames_dir = "frames_$(filename)"
@@ -21,11 +21,15 @@ function visualize_brent(f, a, b, ε; filename="brent_full", fps=1, title_text="
     default(size=(900, 600), dpi=300, framestyle=:box, legendfontsize=9)
     
     margin_x = (b - a) * 0.1
-    x_range = range(a - margin_x, b + margin_x, length=400)
+    plot_min = max(a - margin_x, domain_min) # to avoid plotting too far left if domain is restricted
+    plot_max = b + margin_x
+    
+    x_range = range(plot_min, plot_max, length=400)
     y_values = f.(x_range)
     y_min, y_max = minimum(y_values), maximum(y_values)
     y_span = y_max - y_min
     y_padding = y_span * 0.2
+
     
     frames = []
     
@@ -43,7 +47,7 @@ function visualize_brent(f, a, b, ε; filename="brent_full", fps=1, title_text="
                 title=L"\textit{Brent's\ Method:\ Iteration\ %$i}",
                 xlabel=L"x", ylabel=L"f(x)",
                 ylims=(y_min - y_padding, y_max + y_padding),
-                xlims=(a - margin_x, b + margin_x),
+                xlims=(plot_min, plot_max),
                 legend=:topright,
                 left_margin=10mm, right_margin=5mm, bottom_margin=5mm, top_margin=5mm)
         
@@ -86,8 +90,8 @@ function visualize_brent(f, a, b, ε; filename="brent_full", fps=1, title_text="
         end
 
         # Text Info
-        plot_width = (b + margin_x) - (a - margin_x)
-        text_x_pos = (a - margin_x) + (plot_width * 0.02)
+        plot_width = plot_max - plot_min
+        text_x_pos = plot_min + (plot_width * 0.02)
         annotate!(text_x_pos, y_max + y_padding*0.8, 
                  text(L"\textit{Interval\ length:\ %$(round(b_i - a_i, digits=6))}", :left, 10, :black))
         
@@ -109,6 +113,10 @@ function run_all()
     # 2. Oscillating (Shows switching between GSS and QFS)
     f1(x) = 0.5*(x-2)^2 - 0.5*cos(4*x)
     visualize_brent(f1, 0.0, 5.0, 1e-4, filename="brent_full_oscillating")
+
+    # 3. Concave Monotonic (Shows robustness of Brent where pure QFS fails)
+    f3(x) = sqrt(x)
+    visualize_brent(f3, 0, 2.0, 1e-4, filename="brent_full_concave", domain_min=0.0)
 end
 
 run_all()

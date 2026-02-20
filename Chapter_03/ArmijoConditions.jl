@@ -50,8 +50,6 @@ plot!(p, alphas, armijo_line.(alphas, beta),
 )
 
 # 6. Highlight "Sufficient Decrease" region
-# Instead of filtering array, we create a copy and replace non-matching points with NaN.
-# This breaks the line in the graph and prevents connecting disconnected intervals.
 y_sufficient = copy(phi.(alphas))
 mask = phi.(alphas) .<= armijo_line.(alphas, beta)
 y_sufficient[.!mask] .= NaN
