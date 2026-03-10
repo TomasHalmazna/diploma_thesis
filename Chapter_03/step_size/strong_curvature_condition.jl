@@ -10,7 +10,7 @@ slope0 = dphi(0.0)
 
 # 2. Parameters
 sigma = 0.2  # Curvature parameter
-alpha_max = 2.0
+alpha_max = 1.9
 alphas = 0.0:0.005:alpha_max
 
 # 3. Colors
@@ -22,7 +22,7 @@ color_tangent = RGB(0.0, 0.6, 0.9)
 p2 = plot(alphas, phi.(alphas), 
     label=nothing, color=color_func, linewidth=1.5,
     grid=false, framestyle=:origin, xlims=(-0.1, 2.1), ylims=(-0.2, 1.2),
-    size=(900, 400), ticks=nothing, arrow=true, legend=(0.15, 0.33), 
+    size=(680, 480), ticks=nothing, arrow=true, legend=(0.15, 0.30), 
     legendfontsize=10, foreground_color_legend=:black, legend_background_color=:white
 )
 
