@@ -60,14 +60,25 @@ plot!(p, alphas, y_sufficient,
     linewidth=4.5
 )
 
-# 7. Annotations (updated with adjusted positions)
+# 6b. Mark point x at the beginning
+scatter!(p, [0.0], [phi(0.0)], 
+    label=nothing, 
+    color=:black, 
+    markersize=5,
+    markerstrokewidth=0
+)
+
+# 7. Annotations
 annotate!(p, [
     (alpha_max - 0.15, -0.15, text(L"\alpha", 12, :black, :right)),
     (0.05, 1.15, text(L"y", 12, :black, :left)),
     (-0.05, -0.1, text(L"0", 12, :black, :right)),
 
     # Function label
-    (1.75, 0.75, text(L"f(x + \alpha d)", 12, :black, :left)),
+    (1.08, 1.19, text(L"f(x + \alpha d)", 12, :black, :left)),
+    
+    # Point x label
+    (-0.03, 1.02, text(L"f(x)", 12, :black, :right)),
     
     # Tangent line label
     (0.35, 0.2, text(L"f(x) + \alpha \nabla f^T d", 10, :grey, :left)),
