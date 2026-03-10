@@ -42,7 +42,7 @@ plot!(p2, alphas, phi(0.0) .+ alphas .* (sigma * slope0),
     color=color_tangent, linestyle=:dash, linewidth=1.5
 )
 plot!(p2, alphas, phi(0.0) .+ alphas .* (-sigma * slope0), 
-    label=nothing,  # Nechceme duplicitu v legendě
+    label=nothing,
     color=color_tangent, linestyle=:dash, linewidth=1.5
 )
 
@@ -55,9 +55,9 @@ end
 
 # Draw tangets in specific points representing different states
 plot_tangent!(p2, 0.0, color_tangent, len=0.4, lab=raw"Local slopes: $\nabla f(x + \alpha d)^T d$")    
-plot_tangent!(p2, 0.35, color_tangent)   # Uvnitř první platné zóny (blízko minima)
-plot_tangent!(p2, 0.74, color_tangent)   # Mimo platnou zónu (příliš strmé stoupání k lokálnímu maximu)
-plot_tangent!(p2, 1.15, color_tangent)   # Uvnitř druhé platné zóny
+plot_tangent!(p2, 0.35, color_tangent)
+plot_tangent!(p2, 0.74, color_tangent)
+plot_tangent!(p2, 1.15, color_tangent)
 
 # Add black dot at f(x) point
 scatter!(p2, [0.0], [phi(0.0)], label=nothing, color=:black, markersize=5)
