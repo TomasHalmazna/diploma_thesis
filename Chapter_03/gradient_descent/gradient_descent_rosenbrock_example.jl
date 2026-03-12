@@ -14,7 +14,7 @@ end
 
 # Gradient descent with line search
 # initial point
-x_history = [[-1.0, -1.0]]
+x_history = [[0.0, 0.0]]
 x = copy(x_history[1])
 
 for i in 1:2000
@@ -35,7 +35,7 @@ for i in 1:2000
 end
 
 # === VISUALIZATION ===
-plot_iters = min(15, length(x_history))
+plot_iters = min(20, length(x_history))
 X_hist = [pt[1] for pt in x_history[1:plot_iters]]
 Y_hist = [pt[2] for pt in x_history[1:plot_iters]]
 
@@ -46,11 +46,11 @@ Z = [f([xi, yi]) for yi in y_range, xi in x_range]
 p = contour(x_range, y_range, Z, levels=10 .^ range(-1, 3.5, length=40), 
             color=:viridis, xlabel="x₁", ylabel="x₂", colorbar=false, 
             framestyle=:box, dpi=300, aspect_ratio=:equal,
-            xlim=(-1.5, 1.5), ylim=(-1.5, 1.5))
+            xlim=(-0.5, 1.5), ylim=(-0.5, 1.5), legend=:topleft)
 
 # Plot path without markers for a clean look
 plot!(p, X_hist, Y_hist, color=:red, linewidth=2.0, 
-      label="Gradient Descent (first 15 steps)")
+      label="Gradient Descent (first 20 steps)")
 
 scatter!(p, [X_hist[1]], [Y_hist[1]], color=:blue, markersize=6, label="Start")
 scatter!(p, [1.0], [1.0], color=:gold, shape=:star5, markersize=10, label="Global Minimum")
