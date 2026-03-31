@@ -1,14 +1,6 @@
 using LinearAlgebra
 using Plots
-
-# 1. Backtracking algorithm
-function backtracking_search(f, ∇f, x, d, α; p=0.5, β=1e-4)
-    y, g = f(x), ∇f(x)
-    while f(x + α * d) > y + β * α * dot(g, d)
-        α *= p
-    end
-    return α
-end
+include("backtracking.jl")
 
 # 2. Simple quadratic problem
 f(x) = x[1]^2 + x[2]^2
