@@ -31,10 +31,10 @@ Z = [f([xi, yi]) for yi in y_range, xi in x_range]
 p = contour(x_range, y_range, Z, levels=10 .^ range(-1, 3.5, length=40), 
             color=:viridis, xlabel="x₁", ylabel="x₂", colorbar=false, 
             framestyle=:box, dpi=300, aspect_ratio=:equal,
-            xlim=(-0.5, 1.5), ylim=(-0.5, 1.5), legend=:topleft)
+            xlim=(-0.25, 1.25), ylim=(-0.15, 1.35), legend=:topleft)
 
 # Plot the optimization path
-plot!(p, X_hist, Y_hist, color=:red, linewidth=2.0, label="Conjugate Gradient ($plot_iters steps)")
+plot!(p, X_hist, Y_hist, color=:red, linewidth=2.0, marker=:circle, markersize=4, label="Conjugate Gradient ($plot_iters steps)")
 scatter!(p, [X_hist[1]], [Y_hist[1]], color=:blue, markersize=6, label="Start")
 scatter!(p, [1.0], [1.0], color=:gold, shape=:star5, markersize=10, label="Global Minimum")
 
