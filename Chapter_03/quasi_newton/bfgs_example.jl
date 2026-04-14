@@ -16,6 +16,7 @@ end
 function run_bfgs_experiment(x0; max_iter=200, tol=1e-5)
     n = length(x0)
     
+    # Initialize method and state (W0 = Identity matrix)
     method = BFGSMethod()
     state = OptimizationState(copy(x0), ∇f_rosen(x0), Matrix{Float64}(I, n, n))
     

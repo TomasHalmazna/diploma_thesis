@@ -13,14 +13,14 @@ struct BFGSMethod <: AbstractOptimizer end
 # Direction computation
 function compute_direction(method::BFGSMethod, state::OptimizationState)
     g = state.gradient
-    H_inv = state.inverse_hessian
-    d = -(H_inv * g)
+    W = state.inverse_hessian
+    d = -(W * g)
     return d
 end
 
 # Update of the inverse Hessian using the BFGS formula
 function update_approximation!(method::BFGSMethod, state::OptimizationState, s, y)
-    H = state.inverse_hessian
+    W = state.inverse_hessian
     n = length(s)
     ys = dot(y, s)
     
@@ -28,6 +28,6 @@ function update_approximation!(method::BFGSMethod, state::OptimizationState, s, 
         rho = 1.0 / ys
         I_mat = Matrix{Float64}(I, n, n)
         V = I_mat - rho * (s * transpose(y))
-        state.inverse_hessian = V * H * transpose(V) + rho * (s * transpose(s))
+        state.inverse_hessian = V * W * transpose(V) + rho * (s * transpose(s))
     end
 end
