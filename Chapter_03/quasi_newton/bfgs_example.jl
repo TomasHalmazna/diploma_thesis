@@ -55,7 +55,8 @@ Z = [f_rosen([xi, yi]) for yi in y_range, xi in x_range]
 
 p1 = contour(x_range, y_range, Z, levels=10 .^ range(-1, 3.5, length=40), 
             color=:viridis, xlabel="x₁", ylabel="x₂", colorbar=false, 
-            framestyle=:box, title="BFGS Trajectory on Rosenbrock", dpi=300)
+            framestyle=:box, title="BFGS Trajectory on Rosenbrock", dpi=300,
+            xlims=(-0.1, 1.1), ylims=(-0.1, 1.1))
 
 X_hist = [pt[1] for pt in history_x]
 Y_hist = [pt[2] for pt in history_x]
