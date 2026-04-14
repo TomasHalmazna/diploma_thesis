@@ -36,11 +36,38 @@ end
 
 symlog(x) = sign(x) * log10(1.0 + abs(x))
 
+# --- Nová funkce pro Bracketing ---
+function bracket_minimum(h, a=0.0, initial_step=1e-4, expansion=2.0, max_iter=50)
+    f_a = h(a)
+    b = a + initial_step
+    f_b = h(b)
+    
+    # Pokud už první krok zhoršil funkci, minimum je velmi blízko nuly
+    if f_b > f_a
+        return 0.0, b
+    end
+    
+    c = b + expansion * (b - a)
+    f_c = h(c)
+    
+    for _ in 1:max_iter
+        if f_c > f_b
+            return a, c # Minimum ohraničeno
+        end
+        a, f_a = b, f_b
+        b, f_b = c, f_c
+        c = b + expansion * (b - a)
+        f_c = h(c)
+    end
+    return a, c # Fallback, pokud nenajde
+end
+# ----------------------------------
+
 function run_cg_detailed_analysis(f, ∇f, x0; max_iter=2000, tol=1e-4)
     x = copy(x0)
     
     x_hist = [copy(x)]
-    alpha_hist = Float64[] # Změna: tracking alpha
+    alpha_hist = Float64[]
     desc_hist = [dot(∇f(x), -∇f(x))] 
     grad_norm_hist = [norm(∇f(x))]
     
@@ -72,12 +99,13 @@ function run_cg_detailed_analysis(f, ∇f, x0; max_iter=2000, tol=1e-4)
             break
         end
         
-        # Exact line search
+        # Exact line search s bracketingem
         h(α) = f(x + α * d)
-        res = golden_section_search(h, 0.0, 3.0; tol=1e-8)
+        bracket_start, bracket_end = bracket_minimum(h)
+        res = golden_section_search(h, bracket_start, bracket_end; tol=1e-8)
         alpha = res.xmin
         
-        push!(alpha_hist, alpha) # Uložení alpha
+        push!(alpha_hist, alpha)
         
         x = x + alpha * d
         push!(x_hist, copy(x))
@@ -112,11 +140,10 @@ p1 = contour(x_range, y_range, Z, levels=10 .^ range(-1, 3.5, length=40),
 plot!(p1, X_hist, Y_hist, color=:red, lw=2, marker=:circle, ms=4)
 scatter!(p1, [X_hist[1]], [Y_hist[1]], color=:blue, ms=6)
 
-# Plot 2: Alpha values (Změněno!)
+# Plot 2: Alpha values
 p2 = plot(1:length(alpha_hist), alpha_hist,
-          title=L"Step Size $\alpha_k$", color=:darkorange, lw=2, legend=false,
-          xlabel=L"Iteration $k$", ylabel=L"$\alpha_k$")
-hline!(p2, [3.0], color=:red, ls=:dash, label="Upper Bound") # Zobrazení limitu
+          title=L"Step Size $\alpha_k$ (Log Scale)", color=:darkorange, lw=2, legend=false,
+          xlabel=L"Iteration $k$", ylabel=L"$\log_{10} \alpha_k$")
 
 # Plot 3: Descent Condition g^T d
 p3 = plot(0:(length(desc_hist)-1), symlog.(desc_hist), 
@@ -132,5 +159,5 @@ p4 = plot(0:(length(grad_norm_hist)-1), grad_norm_hist, yscale=:log10,
           xlabel=L"Iteration $k$", ylabel=L"$\log_{10}\|\nabla f\|$")
 
 p_combined = plot(p1, p2, p3, p4, layout=(2,2), size=(1000, 800), margin=5Plots.mm)
-savefig(p_combined, "rosenbrock_pr_detailed_failure.pdf")
-println("Saved detailed failure analysis to 'rosenbrock_pr_detailed_failure.pdf'")
+savefig(p_combined, "rosenbrock_pr_detailed_bracketing.pdf")
+println("Saved detailed failure analysis to 'rosenbrock_pr_detailed_bracketing.pdf'")

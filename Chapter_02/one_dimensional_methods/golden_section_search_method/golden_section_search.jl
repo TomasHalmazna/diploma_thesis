@@ -74,6 +74,31 @@ function golden_section_search(f, a::Float64, b::Float64; tol=1e-8, N=nothing)
 	return (xmin = xmin, fmin = fmin, a = a, b = b, evaluations = evals)
 end
 
+# bracketing function to find an interval containing a minimum
+function bracket_minimum(h, a=0.0, initial_step=1e-4, expansion=2.0, max_iter=50)
+    f_a = h(a)
+    b = a + initial_step
+    f_b = h(b)
+    
+    if f_b > f_a
+        return 0.0, b
+    end
+    
+    c = b + expansion * (b - a)
+    f_c = h(c)
+    
+    for _ in 1:max_iter
+        if f_c > f_b
+            return a, c
+        end
+        a, f_a = b, f_b
+        b, f_b = c, f_c
+        c = b + expansion * (b - a)
+        f_c = h(c)
+    end
+    return a, c
+end
+
 
 # Example usage
 function example()

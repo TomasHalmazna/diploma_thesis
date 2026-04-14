@@ -63,8 +63,9 @@ function run_conjugate_gradient(f, ∇f, x0; variant=:PR_plus, max_iter=2000, to
         
         # exact line search using golden section search
         h(α) = f(x + α * d)
-        res = golden_section_search(h, 0.0, 3.0; tol=1e-8)
-        alpha = res.xmin 
+        bracket_start, bracket_end = bracket_minimum(h)
+        res = golden_section_search(h, bracket_start, bracket_end; tol=1e-8)
+        alpha = res.xmin
         
         # update point
         x = x + alpha * d
