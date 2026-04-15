@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiApp - Fáze 2</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; margin-bottom: 20px; }
+        button:hover { background: #005A9E; }
+        /* Box pro náš graf */
+        #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>2D Vizualizace: Rosenbrock</h1>
+    <button id="runBtn">Spusť optimalizaci (Steepest Descent)</button>
+    
+    <div id="plotDiv"></div>
+
+    <script>
+        // Funkce pro vygenerování pozadí (vrstevnic) Rosenbrockovy funkce přímo v JS
+        function generateContourData() {
+            let x_vals = [], y_vals = [], z_vals = [];
+            for (let i = -2; i <= 2; i += 0.05) x_vals.push(i);
+            for (let i = -1; i <= 3; i += 0.05) y_vals.push(i);
+            
+            for (let j = 0; j < y_vals.length; j++) {
+                let row = [];
+                for (let i = 0; i < x_vals.length; i++) {
+                    let x = x_vals[i], y = y_vals[j];
+                    // f(x) = (1-x)^2 + 100(y-x^2)^2
+                    row.push(Math.pow(1 - x, 2) + 100 * Math.pow(y - Math.pow(x, 2), 2));
+                }
+                z_vals.push(row);
+            }
+            return { x: x_vals, y: y_vals, z: z_vals };
+        }
+
+        // Vykreslení prázdného grafu s vrstevnicemi při načtení stránky
+        const contourData = generateContourData();
+        const layout = {
+            title: 'Optimalizační trajektorie',
+            xaxis: { title: 'x₁', range: [-1.5, 1.5] },
+            yaxis: { title: 'x₂', range: [-0.5, 1.5] }
+        };
+        
+        const contourTrace = {
+            z: contourData.z, x: contourData.x, y: contourData.y,
+            type: 'contour', colorscale: 'Viridis',
+            contours: { coloring: 'lines' } // Aby to vypadalo jako v tvém PDF
+        };
+
+        Plotly.newPlot('plotDiv', [contourTrace], layout);
+
+        // Logika po kliknutí na tlačítko
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            try {
+                // Zavoláme Julii
+                const response = await fetch('http://127.0.0.1:8080/optimize');
+                const data = await response.json();
+                
+                // Vytvoříme novou vrstvu (trace) pro trajektorii z backendu
+                const trajectoryTrace = {
+                    x: data.x_hist,
+                    y: data.y_hist,
+                    mode: 'lines+markers',
+                    type: 'scatter',
+                    line: { color: 'red', width: 2 },
+                    marker: { color: 'red', size: 4 },
+                    name: `Kroky: ${data.iterations}`
+                };
+
+                // Překreslíme graf (přidáme červenou cestu na vrstevnice)
+                Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], layout);
+                
+            } catch (error) {
+                alert("Chyba: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
