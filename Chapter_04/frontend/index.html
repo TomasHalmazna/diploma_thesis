@@ -1,37 +1,118 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OptiApp - Fáze 2</title>
+    <title>Optimization Algorithm Visualizer</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; margin-bottom: 20px; }
+        body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; color: #333; }
+        .panel { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+        .control-group { margin-bottom: 15px; }
+        .hidden { display: none; }
+        select, input[type="number"], button { padding: 8px; font-size: 15px; margin-top: 5px; }
+        input[type="number"] { width: 80px; }
+        button { cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; font-weight: bold; padding: 10px 20px; }
         button:hover { background: #005A9E; }
-        /* Box pro náš graf */
         #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
     </style>
 </head>
 <body>
 
-    <h1>2D Vizualizace: Rosenbrock</h1>
-    <button id="runBtn">Spusť optimalizaci (Steepest Descent)</button>
+    <h1>2D Optimization Visualizer</h1>
+    
+    <div class="panel">
+        <div class="control-group">
+            <label for="methodSelect"><strong>Optimization Method:</strong></label><br>
+            <select id="methodSelect">
+                <option value="sd">Steepest Descent</option>
+                <option value="cg">Conjugate Gradient</option>
+            </select>
+        </div>
+
+        <div class="control-group hidden" id="cgVariantGroup">
+            <label for="cgVariantSelect"><strong>CG Variant:</strong></label><br>
+            <select id="cgVariantSelect">
+                <option value="PR_plus">Polak-Ribière+ (PR+)</option>
+                <option value="PR">Polak-Ribière (PR)</option>
+                <option value="FR">Fletcher-Reeves (FR)</option>
+            </select>
+        </div>
+
+        <hr>
+
+        <div class="control-group">
+            <label for="lsSelect"><strong>Line Search Method:</strong></label><br>
+            <select id="lsSelect">
+                <option value="backtracking">Backtracking (Inexact)</option>
+                <option value="gss">Golden Section Search (Exact)</option>
+            </select>
+        </div>
+
+        <div class="control-group hidden" id="gssOptionsGroup">
+            <label>
+                <input type="checkbox" id="autoBracketCb" checked> 
+                <strong>Use Automatic Bracketing</strong>
+            </label>
+            
+            <div id="manualIntervalDiv" class="hidden" style="margin-top: 10px;">
+                <label>Start (a): <input type="number" id="bracketA" value="0.0" step="0.1"></label>
+                <label style="margin-left: 15px;">End (b): <input type="number" id="bracketB" value="1.0" step="0.1"></label>
+            </div>
+        </div>
+
+        <button id="runBtn">Run Optimization</button>
+    </div>
     
     <div id="plotDiv"></div>
 
     <script>
-        // Funkce pro vygenerování pozadí (vrstevnic) Rosenbrockovy funkce přímo v JS
+        // --- UI Logic: Show/Hide controls dynamically based on selections ---
+        
+        const methodSelect = document.getElementById('methodSelect');
+        const cgVariantGroup = document.getElementById('cgVariantGroup');
+        
+        methodSelect.addEventListener('change', () => {
+            if (methodSelect.value === 'cg') {
+                cgVariantGroup.classList.remove('hidden');
+            } else {
+                cgVariantGroup.classList.add('hidden');
+            }
+        });
+
+        const lsSelect = document.getElementById('lsSelect');
+        const gssOptionsGroup = document.getElementById('gssOptionsGroup');
+        const autoBracketCb = document.getElementById('autoBracketCb');
+        const manualIntervalDiv = document.getElementById('manualIntervalDiv');
+
+        lsSelect.addEventListener('change', () => {
+            if (lsSelect.value === 'gss') {
+                gssOptionsGroup.classList.remove('hidden');
+            } else {
+                gssOptionsGroup.classList.add('hidden');
+            }
+        });
+
+        autoBracketCb.addEventListener('change', () => {
+            if (autoBracketCb.checked) {
+                manualIntervalDiv.classList.add('hidden');
+            } else {
+                manualIntervalDiv.classList.remove('hidden');
+            }
+        });
+
+        // --- Plotly Logic ---
+
         function generateContourData() {
             let x_vals = [], y_vals = [], z_vals = [];
-            for (let i = -2; i <= 2; i += 0.05) x_vals.push(i);
-            for (let i = -1; i <= 3; i += 0.05) y_vals.push(i);
+            for (let i = -1.5; i <= 1.5; i += 0.05) x_vals.push(i);
+            for (let i = -0.5; i <= 1.5; i += 0.05) y_vals.push(i);
             
             for (let j = 0; j < y_vals.length; j++) {
                 let row = [];
                 for (let i = 0; i < x_vals.length; i++) {
                     let x = x_vals[i], y = y_vals[j];
-                    // f(x) = (1-x)^2 + 100(y-x^2)^2
                     row.push(Math.pow(1 - x, 2) + 100 * Math.pow(y - Math.pow(x, 2), 2));
                 }
                 z_vals.push(row);
@@ -39,10 +120,9 @@
             return { x: x_vals, y: y_vals, z: z_vals };
         }
 
-        // Vykreslení prázdného grafu s vrstevnicemi při načtení stránky
         const contourData = generateContourData();
         const layout = {
-            title: 'Optimalizační trajektorie',
+            title: 'Rosenbrock Function Trajectory',
             xaxis: { title: 'x₁', range: [-1.5, 1.5] },
             yaxis: { title: 'x₂', range: [-0.5, 1.5] }
         };
@@ -50,34 +130,50 @@
         const contourTrace = {
             z: contourData.z, x: contourData.x, y: contourData.y,
             type: 'contour', colorscale: 'Viridis',
-            contours: { coloring: 'lines' } // Aby to vypadalo jako v tvém PDF
+            contours: { coloring: 'lines' }
         };
 
+        // Initialize empty plot
         Plotly.newPlot('plotDiv', [contourTrace], layout);
 
-        // Logika po kliknutí na tlačítko
+        // --- API Call Logic ---
+
         document.getElementById('runBtn').addEventListener('click', async () => {
+            // Gather all parameters from the UI
+            const method = methodSelect.value;
+            const cgVariant = document.getElementById('cgVariantSelect').value;
+            const ls = lsSelect.value;
+            const autoBracket = autoBracketCb.checked;
+            const bracketA = document.getElementById('bracketA').value;
+            const bracketB = document.getElementById('bracketB').value;
+            
+            // Build the query string
+            const url = `http://127.0.0.1:8080/optimize?method=${method}&cg_variant=${cgVariant}&linesearch=${ls}&auto_bracket=${autoBracket}&bracket_a=${bracketA}&bracket_b=${bracketB}`;
+            
             try {
-                // Zavoláme Julii
-                const response = await fetch('http://127.0.0.1:8080/optimize');
+                const response = await fetch(url);
                 const data = await response.json();
                 
-                // Vytvoříme novou vrstvu (trace) pro trajektorii z backendu
+                if (data.status !== "success") {
+                    alert("Optimization failed or returned an error.");
+                    return;
+                }
+
                 const trajectoryTrace = {
                     x: data.x_hist,
                     y: data.y_hist,
                     mode: 'lines+markers',
                     type: 'scatter',
-                    line: { color: 'red', width: 2 },
-                    marker: { color: 'red', size: 4 },
-                    name: `Kroky: ${data.iterations}`
+                    line: { color: 'red', width: 2.5 },
+                    marker: { color: 'red', size: 5 },
+                    name: `${method.toUpperCase()} (${data.iterations} steps)`
                 };
 
-                // Překreslíme graf (přidáme červenou cestu na vrstevnice)
+                // Redraw plot with new trajectory
                 Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], layout);
                 
             } catch (error) {
-                alert("Chyba: " + error.message);
+                alert("Error connecting to Julia backend: " + error.message);
             }
         });
     </script>

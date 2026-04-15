@@ -2,6 +2,18 @@ using Oxygen
 using HTTP
 using LinearAlgebra
 
+# Include core optimization logic:
+include("Core.jl")
+
+# Include optimizers:
+include(joinpath("Optimizers", "ConjugateGradient.jl"))
+include(joinpath("Optimizers", "SteepestDescent.jl"))
+
+# Include line search methods:
+include(joinpath("LineSearch", "GoldenSectionSearch.jl"))
+include(joinpath("LineSearch", "Backtracking.jl"))
+
+
 # Definice Rosenbrockovy funkce a jejího gradientu
 f_rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 function ∇f_rosen(x)
@@ -10,29 +22,52 @@ function ∇f_rosen(x)
     return [g1, g2]
 end
 
+
+# Define the API endpoint for optimization
 @get "/optimize" function(req::HTTP.Request)
-    # Startovní bod (zajímavější pro Rosenbrocka) a pevný malý krok
-    x = [-1.0, 0.0]
-    alpha = 0.001 
+    query = queryparams(req)
     
-    # Historie pro vykreslení
-    x_hist = [x[1]]
-    y_hist = [x[2]]
+    # 1. Parse optimizer options
+    selected_method = get(query, "method", "sd")
+    cg_variant_str = get(query, "cg_variant", "PR_plus")
     
-    # Jednoduchý Steepest Descent
-    for _ in 1:2000
-        g = ∇f_rosen(x)
-        if norm(g) < 1e-4
-            break
-        end
-        x = x - alpha * g
-        push!(x_hist, x[1])
-        push!(y_hist, x[2])
+    # 2. Parse line search options
+    ls_type = get(query, "linesearch", "backtracking")
+    auto_bracket = parse(Bool, get(query, "auto_bracket", "true"))
+    bracket_a = parse(Float64, get(query, "bracket_a", "0.0"))
+    bracket_b = parse(Float64, get(query, "bracket_b", "1.0"))
+    
+    println("Request: Method=$selected_method, LS=$ls_type, AutoBracket=$auto_bracket")
+    
+    x0 = [-1.0, 0.0]
+    
+    # --- Instantiate Optimizer ---
+    if selected_method == "cg"
+        variant_symbol = Symbol(cg_variant_str)
+        method = ConjugateGradient(variant_symbol)
+    else
+        method = SteepestDescent()
     end
+    
+    # --- Instantiate Line Search ---
+    if ls_type == "gss"
+        linesearch = GoldenSectionSearch(
+            auto_bracket=auto_bracket, 
+            manual_interval=(bracket_a, bracket_b)
+        )
+    else
+        linesearch = Backtracking()
+    end
+    
+    # Run optimization
+    history = run_optimization(f_rosen, ∇f_rosen, x0, method, linesearch; max_iter=2000, tol=1e-4)
+    
+    x_hist = [pt[1] for pt in history]
+    y_hist = [pt[2] for pt in history]
     
     return Dict(
         "status" => "success",
-        "iterations" => length(x_hist) - 1,
+        "iterations" => length(history) - 1,
         "x_hist" => x_hist,
         "y_hist" => y_hist
     )
