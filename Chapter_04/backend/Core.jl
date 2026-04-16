@@ -9,18 +9,19 @@ abstract type AbstractLineSearch end
 mutable struct OptimizationState
     x::Vector{Float64}
     gradient::Vector{Float64}
-    inverse_hessian::Matrix{Float64} # W_k matrix for quasi-Newton methods, not updated for memoryless methods
+    inverse_hessian::Matrix{Float64}
+    history::Vector{Any} # array of Tuples (s, y, rho) for methods that need to store history (like LBFGS)
 end
 
 # --- GENERAL ITERATIVE SCHEMA ---
 function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimizer, linesearch::AbstractLineSearch; max_iter=1000, tol=1e-5)
     n = length(x0)
     
-    # Initialize the state. W_0 is initialized as the Identity matrix.
-    state = OptimizationState(copy(x0), ∇f(x0), Matrix{Float64}(I, n, n))
+    # Initialize the state. W_0 is initialized as the Identity matrix, history is empty
+    state = OptimizationState(copy(x0), ∇f(x0), Matrix{Float64}(I, n, n), [])
     
-    history = [copy(state.x)]
-    
+    history_pts = [copy(state.x)]    
+
     for _ in 1:max_iter
         if norm(state.gradient) < tol
             break
@@ -46,11 +47,11 @@ function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimize
         # 5. Overwrite state
         state.x = x_next
         state.gradient = g_next
+        push!(history_pts, copy(state.x))
         
-        push!(history, copy(state.x))
     end
     
-    return history
+    return history_pts
 end
 
 # Default fallback for methods without memory updates
