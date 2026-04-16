@@ -8,14 +8,20 @@
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; color: #333; }
         .panel { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+        .results-panel { background: #e6f7ff; border: 1px solid #91d5ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .control-group { margin-bottom: 15px; }
         .hidden { display: none; }
         select, input[type="number"], button { padding: 8px; font-size: 15px; margin-top: 5px; }
         input[type="number"] { width: 80px; }
         button { cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; font-weight: bold; padding: 10px 20px; }
         button:hover { background: #005A9E; }
-        #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; }
+        #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 20px; }
         hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+        
+        /* Styles for expandable charts */
+        details { margin-top: 15px; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        summary { font-weight: bold; cursor: pointer; outline: none; padding: 5px 0; }
+        .mini-plot { width: 100%; height: 350px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -28,6 +34,9 @@
             <select id="methodSelect">
                 <option value="sd">Steepest Descent</option>
                 <option value="cg">Conjugate Gradient</option>
+                <option value="newton">Newton's Method (Exact)</option>
+                <option value="dfp">DFP (Quasi-Newton)</option>
+                <option value="bfgs">BFGS (Quasi-Newton)</option>
             </select>
         </div>
 
@@ -64,12 +73,26 @@
 
         <button id="runBtn">Run Optimization</button>
     </div>
+
+    <div id="resultsPanel" class="results-panel hidden">
+        <h3 style="margin-top: 0;">Optimization Results</h3>
+        <p style="font-size: 18px;"><strong>Total Iterations: <span id="iterCount">0</span></strong></p>
+        
+        <details id="fDetails">
+            <summary>► Show Function Value Evolution</summary>
+            <div id="fPlotDiv" class="mini-plot"></div>
+        </details>
+
+        <details id="gradDetails">
+            <summary>► Show Gradient Norm Evolution</summary>
+            <div id="gradPlotDiv" class="mini-plot"></div>
+        </details>
+    </div>
     
     <div id="plotDiv"></div>
 
     <script>
-        // --- UI Logic: Show/Hide controls dynamically based on selections ---
-        
+        // --- UI Logic ---
         const methodSelect = document.getElementById('methodSelect');
         const cgVariantGroup = document.getElementById('cgVariantGroup');
         
@@ -102,8 +125,16 @@
             }
         });
 
-        // --- Plotly Logic ---
+        // Resize Plotly charts when the details element is expanded
+        // (Plotly needs a little nudge to render correctly inside a hidden container)
+        document.getElementById('fDetails').addEventListener('toggle', function() {
+            if(this.open) Plotly.Plots.resize('fPlotDiv');
+        });
+        document.getElementById('gradDetails').addEventListener('toggle', function() {
+            if(this.open) Plotly.Plots.resize('gradPlotDiv');
+        });
 
+        // --- Plotly Base Logic ---
         function generateContourData() {
             let x_vals = [], y_vals = [], z_vals = [];
             for (let i = -1.5; i <= 1.5; i += 0.05) x_vals.push(i);
@@ -121,7 +152,7 @@
         }
 
         const contourData = generateContourData();
-        const layout = {
+        const mainLayout = {
             title: 'Rosenbrock Function Trajectory',
             xaxis: { title: 'x₁', range: [-1.5, 1.5] },
             yaxis: { title: 'x₂', range: [-0.5, 1.5] }
@@ -133,13 +164,10 @@
             contours: { coloring: 'lines' }
         };
 
-        // Initialize empty plot
-        Plotly.newPlot('plotDiv', [contourTrace], layout);
+        Plotly.newPlot('plotDiv', [contourTrace], mainLayout);
 
         // --- API Call Logic ---
-
         document.getElementById('runBtn').addEventListener('click', async () => {
-            // Gather all parameters from the UI
             const method = methodSelect.value;
             const cgVariant = document.getElementById('cgVariantSelect').value;
             const ls = lsSelect.value;
@@ -147,7 +175,11 @@
             const bracketA = document.getElementById('bracketA').value;
             const bracketB = document.getElementById('bracketB').value;
             
-            // Build the query string
+            let methodLabel = methodSelect.options[methodSelect.selectedIndex].text;
+            if (method === 'cg') {
+                methodLabel = document.getElementById('cgVariantSelect').options[document.getElementById('cgVariantSelect').selectedIndex].text;
+            }
+            
             const url = `http://127.0.0.1:8080/optimize?method=${method}&cg_variant=${cgVariant}&linesearch=${ls}&auto_bracket=${autoBracket}&bracket_a=${bracketA}&bracket_b=${bracketB}`;
             
             try {
@@ -159,6 +191,7 @@
                     return;
                 }
 
+                // 1. Draw main trajectory
                 const trajectoryTrace = {
                     x: data.x_hist,
                     y: data.y_hist,
@@ -166,11 +199,45 @@
                     type: 'scatter',
                     line: { color: 'red', width: 2.5 },
                     marker: { color: 'red', size: 5 },
-                    name: `${method.toUpperCase()} (${data.iterations} steps)`
+                    name: `${methodLabel}`
                 };
+                Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], mainLayout);
 
-                // Redraw plot with new trajectory
-                Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], layout);
+                // 2. Update Results Panel
+                document.getElementById('resultsPanel').classList.remove('hidden');
+                document.getElementById('iterCount').innerText = data.iterations;
+
+                const iterationsArray = Array.from({length: data.iterations + 1}, (_, i) => i);
+
+                // 3. Draw Function Value Chart (Log scale)
+                const fTrace = {
+                    x: iterationsArray,
+                    y: data.f_hist,
+                    mode: 'lines+markers',
+                    type: 'scatter',
+                    line: { color: 'blue' },
+                    name: 'f(x)'
+                };
+                Plotly.newPlot('fPlotDiv', [fTrace], {
+                    margin: { t: 20, b: 40, l: 50, r: 20 },
+                    xaxis: { title: 'Iteration (k)' },
+                    yaxis: { title: 'f(x)', type: 'log' }
+                });
+
+                // 4. Draw Gradient Norm Chart (Log scale)
+                const gradTrace = {
+                    x: iterationsArray,
+                    y: data.grad_norm_hist,
+                    mode: 'lines+markers',
+                    type: 'scatter',
+                    line: { color: 'green' },
+                    name: '||∇f(x)||'
+                };
+                Plotly.newPlot('gradPlotDiv', [gradTrace], {
+                    margin: { t: 20, b: 40, l: 50, r: 20 },
+                    xaxis: { title: 'Iteration (k)' },
+                    yaxis: { title: '||∇f(x)||', type: 'log' }
+                });
                 
             } catch (error) {
                 alert("Error connecting to Julia backend: " + error.message);
