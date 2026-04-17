@@ -5,14 +5,21 @@ using LinearAlgebra
 
 include("Core.jl")
 
+# include multidimensional optimizers
 include(joinpath("Optimizers", "SteepestDescent.jl"))
 include(joinpath("Optimizers", "ConjugateGradient.jl"))
 include(joinpath("Optimizers", "NewtonMethod.jl"))
 include(joinpath("Optimizers", "DFP.jl"))
 include(joinpath("Optimizers", "BFGS.jl"))
+include(joinpath("Optimizers", "LBFGS.jl"))
 
+# include line search methods
 include(joinpath("LineSearch", "Backtracking.jl"))
+include(joinpath("LineSearch", "Bracketing.jl"))
 include(joinpath("LineSearch", "GoldenSectionSearch.jl"))
+include(joinpath("LineSearch", "DichotomousSearch.jl")) 
+include(joinpath("LineSearch", "QuadraticFitSearch.jl"))
+include(joinpath("LineSearch", "BrentsMethod.jl")) 
 
 # --- ROSENBROCK FUNCTION DEFINITIONS ---
 f_rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
@@ -55,6 +62,8 @@ end
         method = DFPMethod()
     elseif selected_method == "bfgs"
         method = BFGSMethod()
+    elseif selected_method == "lbfgs"
+        method = LBFGSMethod() # Default: m=10
     else
         method = SteepestDescent()
     end
@@ -62,6 +71,12 @@ end
     # --- Instantiate Line Search ---
     if ls_type == "gss"
         linesearch = GoldenSectionSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
+    elseif ls_type == "dichotomous"
+        linesearch = DichotomousSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
+    elseif ls_type == "quadratic"
+        linesearch = QuadraticFitSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
+    elseif ls_type == "brent"
+        linesearch = BrentsMethod(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
     else
         linesearch = Backtracking()
     end

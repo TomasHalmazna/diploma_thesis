@@ -37,6 +37,7 @@
                 <option value="newton">Newton's Method (Exact)</option>
                 <option value="dfp">DFP (Quasi-Newton)</option>
                 <option value="bfgs">BFGS (Quasi-Newton)</option>
+                <option value="lbfgs">L-BFGS (Limited Memory)</option>
             </select>
         </div>
 
@@ -56,10 +57,13 @@
             <select id="lsSelect">
                 <option value="backtracking">Backtracking (Inexact)</option>
                 <option value="gss">Golden Section Search (Exact)</option>
+                <option value="dichotomous">Dichotomous Search (Exact)</option>
+                <option value="quadratic">Quadratic Fit Search (Exact)</option>
+                <option value="brent">Brent's Method (Exact)</option>
             </select>
         </div>
 
-        <div class="control-group hidden" id="gssOptionsGroup">
+        <div class="control-group hidden" id="exactLsOptionsGroup">
             <label>
                 <input type="checkbox" id="autoBracketCb" checked> 
                 <strong>Use Automatic Bracketing</strong>
@@ -105,15 +109,18 @@
         });
 
         const lsSelect = document.getElementById('lsSelect');
-        const gssOptionsGroup = document.getElementById('gssOptionsGroup');
+        const exactLsOptionsGroup = document.getElementById('exactLsOptionsGroup');
         const autoBracketCb = document.getElementById('autoBracketCb');
         const manualIntervalDiv = document.getElementById('manualIntervalDiv');
 
+        // Array of methods that require the bracketing options
+        const exactMethods = ['gss', 'dichotomous', 'quadratic', 'brent'];
+
         lsSelect.addEventListener('change', () => {
-            if (lsSelect.value === 'gss') {
-                gssOptionsGroup.classList.remove('hidden');
+            if (exactMethods.includes(lsSelect.value)) {
+                exactLsOptionsGroup.classList.remove('hidden');
             } else {
-                gssOptionsGroup.classList.add('hidden');
+                exactLsOptionsGroup.classList.add('hidden');
             }
         });
 
@@ -126,7 +133,6 @@
         });
 
         // Resize Plotly charts when the details element is expanded
-        // (Plotly needs a little nudge to render correctly inside a hidden container)
         document.getElementById('fDetails').addEventListener('toggle', function() {
             if(this.open) Plotly.Plots.resize('fPlotDiv');
         });
