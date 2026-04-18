@@ -18,7 +18,6 @@
         #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 20px; }
         hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
         
-        /* Styles for expandable charts */
         details { margin-top: 15px; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         summary { font-weight: bold; cursor: pointer; outline: none; padding: 5px 0; }
         .mini-plot { width: 100%; height: 350px; margin-top: 10px; }
@@ -48,6 +47,12 @@
                 <option value="PR">Polak-Ribière (PR)</option>
                 <option value="FR">Fletcher-Reeves (FR)</option>
             </select>
+        </div>
+
+        <div class="control-group hidden" id="lbfgsOptionsGroup">
+            <label for="mInput"><strong>Memory size (m):</strong></label><br>
+            <input type="number" id="mInput" value="5" min="1" step="1">
+            <small style="color: #666; margin-left: 10px;">(Typically 5 to 20 vectors)</small>
         </div>
 
         <hr>
@@ -99,12 +104,18 @@
         // --- UI Logic ---
         const methodSelect = document.getElementById('methodSelect');
         const cgVariantGroup = document.getElementById('cgVariantGroup');
+        const lbfgsOptionsGroup = document.getElementById('lbfgsOptionsGroup');
         
         methodSelect.addEventListener('change', () => {
+            // Hide specific menus first
+            cgVariantGroup.classList.add('hidden');
+            lbfgsOptionsGroup.classList.add('hidden');
+
+            // Show relevant menu based on selection
             if (methodSelect.value === 'cg') {
                 cgVariantGroup.classList.remove('hidden');
-            } else {
-                cgVariantGroup.classList.add('hidden');
+            } else if (methodSelect.value === 'lbfgs') {
+                lbfgsOptionsGroup.classList.remove('hidden');
             }
         });
 
@@ -113,7 +124,6 @@
         const autoBracketCb = document.getElementById('autoBracketCb');
         const manualIntervalDiv = document.getElementById('manualIntervalDiv');
 
-        // Array of methods that require the bracketing options
         const exactMethods = ['gss', 'dichotomous', 'quadratic', 'brent'];
 
         lsSelect.addEventListener('change', () => {
@@ -132,7 +142,6 @@
             }
         });
 
-        // Resize Plotly charts when the details element is expanded
         document.getElementById('fDetails').addEventListener('toggle', function() {
             if(this.open) Plotly.Plots.resize('fPlotDiv');
         });
@@ -181,12 +190,28 @@
             const bracketA = document.getElementById('bracketA').value;
             const bracketB = document.getElementById('bracketB').value;
             
+            // Validation for L-BFGS m parameter
+            let mValue = 5;
+            if (method === 'lbfgs') {
+                const rawM = document.getElementById('mInput').value;
+                const parsedM = Number(rawM);
+                
+                // Check if parsedM is a valid positive integer
+                if (isNaN(parsedM) || !Number.isInteger(parsedM) || parsedM < 1) {
+                    alert("Error: Memory size (m) must be a positive integer (e.g., 5, 10, 20).");
+                    return; 
+                }
+                mValue = parsedM;
+            }
+
             let methodLabel = methodSelect.options[methodSelect.selectedIndex].text;
             if (method === 'cg') {
                 methodLabel = document.getElementById('cgVariantSelect').options[document.getElementById('cgVariantSelect').selectedIndex].text;
+            } else if (method === 'lbfgs') {
+                methodLabel = `L-BFGS (m=${mValue})`;
             }
             
-            const url = `http://127.0.0.1:8080/optimize?method=${method}&cg_variant=${cgVariant}&linesearch=${ls}&auto_bracket=${autoBracket}&bracket_a=${bracketA}&bracket_b=${bracketB}`;
+            const url = `http://127.0.0.1:8080/optimize?method=${method}&cg_variant=${cgVariant}&m=${mValue}&linesearch=${ls}&auto_bracket=${autoBracket}&bracket_a=${bracketA}&bracket_b=${bracketB}`;
             
             try {
                 const response = await fetch(url);
@@ -197,7 +222,6 @@
                     return;
                 }
 
-                // 1. Draw main trajectory
                 const trajectoryTrace = {
                     x: data.x_hist,
                     y: data.y_hist,
@@ -209,13 +233,11 @@
                 };
                 Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], mainLayout);
 
-                // 2. Update Results Panel
                 document.getElementById('resultsPanel').classList.remove('hidden');
                 document.getElementById('iterCount').innerText = data.iterations;
 
                 const iterationsArray = Array.from({length: data.iterations + 1}, (_, i) => i);
 
-                // 3. Draw Function Value Chart (Log scale)
                 const fTrace = {
                     x: iterationsArray,
                     y: data.f_hist,
@@ -230,7 +252,6 @@
                     yaxis: { title: 'f(x)', type: 'log' }
                 });
 
-                // 4. Draw Gradient Norm Chart (Log scale)
                 const gradTrace = {
                     x: iterationsArray,
                     y: data.grad_norm_hist,

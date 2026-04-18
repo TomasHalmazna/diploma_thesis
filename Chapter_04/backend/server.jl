@@ -44,6 +44,14 @@ end
     
     selected_method = get(query, "method", "sd")
     cg_variant_str = get(query, "cg_variant", "PR_plus")
+    
+    # Získání a parsování parametru m (defaultně 5)
+    m_str = get(query, "m", "5")
+    m_val = tryparse(Int, m_str)
+    if m_val === nothing || m_val < 1
+        m_val = 5 # Pojistka na backendu, kdyby selhal frontend
+    end
+    
     ls_type = get(query, "linesearch", "backtracking")
     auto_bracket = parse(Bool, get(query, "auto_bracket", "true"))
     bracket_a = parse(Float64, get(query, "bracket_a", "0.0"))
@@ -63,10 +71,11 @@ end
     elseif selected_method == "bfgs"
         method = BFGSMethod()
     elseif selected_method == "lbfgs"
-        method = LBFGSMethod() # Default: m=10
+        method = LBFGSMethod(m_val) # memory limit for LBFGS
     else
         method = SteepestDescent()
     end
+
     
     # --- Instantiate Line Search ---
     if ls_type == "gss"
