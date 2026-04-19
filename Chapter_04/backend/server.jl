@@ -85,19 +85,16 @@ include(joinpath("LineSearch", "BrentsMethod.jl"))
     end
     
     # Running optimization
-    history = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
+    history, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
     
     dim_x = clamp(dim_x, 1, length(x0))
     dim_y = clamp(dim_y, 1, length(x0))
 
-    # Syrová data pro detekci
+    # Extract trajectory data
     f_hist_raw = [f_obj(pt) for pt in history]
     grad_norm_hist_raw = [norm(∇f_obj(pt)) for pt in history]
 
-    # NEW: Detekce divergence (pokud matematické hodnoty "přetekly" Float64)
-    has_diverged = any(isnan.(f_hist_raw)) || any(isinf.(f_hist_raw))
-
-    # Čištění dat pro JSON
+    # Clean data for JSON (handle NaN/Inf)
     clean_val(v) = (isnan(v) || isinf(v)) ? nothing : v
 
     x_hist = [clean_val(pt[dim_x]) for pt in history]
@@ -105,15 +102,26 @@ include(joinpath("LineSearch", "BrentsMethod.jl"))
     f_hist = [clean_val(v) for v in f_hist_raw]
     grad_norm_hist = [clean_val(v) for v in grad_norm_hist_raw]
     
-    return Dict(
-        "status" => "success",
+    # Build response with divergence information
+    response = Dict(
+        "status" => div_info.diverged ? "diverged" : "success",
         "iterations" => length(history) - 1,
         "x_hist" => x_hist,
         "y_hist" => y_hist,
         "f_hist" => f_hist,
         "grad_norm_hist" => grad_norm_hist,
-        "diverged" => has_diverged # NEW: Posíláme info o divergenci
+        "diverged" => div_info.diverged,
+        "divergence_reason" => div_info.reason,
+        "divergence_iteration" => div_info.iteration,
+        "final_grad_norm" => div_info.grad_norm,
+        "final_f_value" => div_info.f_value
     )
+    
+    if div_info.diverged
+        println("⚠️ Divergence detected: $(div_info.reason) at iteration $(div_info.iteration)")
+    end
+    
+    return response
 end
 
 function cors_middleware(handler)
