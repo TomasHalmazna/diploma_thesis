@@ -5,3 +5,11 @@ Chapter_04/DIVERGENCE_IMPLEMENTATION.md
 Chapter_04/backend/test_all_combinations.jl
 Chapter_04/backend/test_results_new.txt
 Chapter_04/backend/test_results.txt
+Chapter_04/CHANGES_SUMMARY.md
+.gitignore
+Chapter_04/CODE_CHANGES_REFERENCE.md
+.gitignore
+.gitignore
+Chapter_04/TEST_CASES_GUIDE.md
+Chapter_04/FRONTEND_IMPROVEMENTS.md
+Chapter_04/README_IMPROVEMENTS.md

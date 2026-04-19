@@ -85,7 +85,7 @@ include(joinpath("LineSearch", "BrentsMethod.jl"))
     end
     
     # Running optimization
-    history, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
+    history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
     
     dim_x = clamp(dim_x, 1, length(x0))
     dim_y = clamp(dim_y, 1, length(x0))
@@ -101,8 +101,9 @@ include(joinpath("LineSearch", "BrentsMethod.jl"))
     y_hist = [clean_val(pt[dim_y]) for pt in history]
     f_hist = [clean_val(v) for v in f_hist_raw]
     grad_norm_hist = [clean_val(v) for v in grad_norm_hist_raw]
+    alpha_hist_clean = [clean_val(v) for v in alpha_hist]
     
-    # Build response with divergence information
+    # Build response with divergence information and step sizes
     response = Dict(
         "status" => div_info.diverged ? "diverged" : "success",
         "iterations" => length(history) - 1,
@@ -110,6 +111,7 @@ include(joinpath("LineSearch", "BrentsMethod.jl"))
         "y_hist" => y_hist,
         "f_hist" => f_hist,
         "grad_norm_hist" => grad_norm_hist,
+        "alpha_hist" => alpha_hist_clean,
         "diverged" => div_info.diverged,
         "divergence_reason" => div_info.reason,
         "divergence_iteration" => div_info.iteration,

@@ -41,12 +41,30 @@
         .formula-box { background: #eee; padding: 10px; font-family: monospace; border-left: 4px solid #0078D7; margin: 10px 0;}
         
         /* Warning Styles */
-        .warning-box { color: #d9534f; background: #fdf015; padding: 10px; border-left: 4px solid #d9534f; font-weight: bold; border-radius: 4px; margin-top: 10px;}
+        .warning-box { color: #d9534f; background: #fdf015; padding: 15px; border-left: 4px solid #d9534f; font-weight: bold; border-radius: 4px; margin-top: 10px;}
+        .divergence-details { background: #fff3cd; padding: 12px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 13px; line-height: 1.8;}
+        .divergence-details strong { color: #000; font-weight: bold; }
+
+        /* Loading Indicator */
+        .loading-overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.3); }
+        .loading-overlay.active { display: flex; }
+        .loading-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #0078D7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { font-size: 16px; color: #333; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h1>Optimization Algorithm Visualizer</h1>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Optimizing... Please wait</div>
+        </div>
+    </div>
     
     <div class="panel">
         
@@ -143,7 +161,8 @@
         <p style="font-size: 18px; margin-bottom: 5px;"><strong>Total Iterations: <span id="iterCount">0</span></strong></p>
         
         <div id="divergenceWarning" class="warning-box hidden">
-            ⚠️ Divergence Detected: The method became numerically unstable. The step size or gradient exceeded the computational limits (Overflow/NaN), likely due to a poor starting point or an inappropriate line search.
+            <div>⚠️ DIVERGENCE DETECTED</div>
+            <div id="divergenceDetails" class="divergence-details"></div>
         </div>
         
         <details id="fDetails">
@@ -154,6 +173,11 @@
         <details id="gradDetails">
             <summary>► Show Gradient Norm Evolution</summary>
             <div id="gradPlotDiv" class="mini-plot"></div>
+        </details>
+
+        <details id="alphaDetails">
+            <summary>► Show Step Size Evolution</summary>
+            <div id="alphaPlotDiv" class="mini-plot"></div>
         </details>
     </div>
     
@@ -243,6 +267,7 @@
 
         document.getElementById('fDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('fPlotDiv'); });
         document.getElementById('gradDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('gradPlotDiv'); });
+        document.getElementById('alphaDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('alphaPlotDiv'); });
 
         // --- Modal Logic ---
         const functionData = {
@@ -386,11 +411,17 @@
             
             const url = `http://127.0.0.1:8080/optimize?function=${func}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
             
+            // Show loading indicator
+            document.getElementById('loadingOverlay').classList.add('active');
+            
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.status !== "success") return alert("Optimization failed.");
+                // Hide loading indicator
+                document.getElementById('loadingOverlay').classList.remove('active');
+                
+                if (data.status !== "success" && !data.diverged) return alert("Optimization failed.");
 
                 drawContourBackground();
 
@@ -406,17 +437,36 @@
 
                 // Handle Divergence Warning
                 const warnBox = document.getElementById('divergenceWarning');
+                const divDetails = document.getElementById('divergenceDetails');
                 if (data.diverged) {
                     warnBox.classList.remove('hidden');
+                    divDetails.innerHTML = `
+                        <div><strong>Reason:</strong> ${data.divergence_reason}</div>
+                        <div><strong>Iteration:</strong> ${data.divergence_iteration}/2000</div>
+                        <div><strong>Final Gradient Norm:</strong> ||∇f(x)|| = ${data.final_grad_norm.toExponential(3)}</div>
+                        <div><strong>Final Function Value:</strong> f(x) = ${data.final_f_value.toExponential(3)}</div>
+                    `;
                 } else {
                     warnBox.classList.add('hidden');
                 }
 
                 const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
-                Plotly.newPlot('fPlotDiv', [{ x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' }, name: 'f(x)' }], { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: 'log' } });
-                Plotly.newPlot('gradPlotDiv', [{ x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' }, name: '||∇f(x)||' }], { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: 'log' } });
+                const alphaArr = Array.from({length: data.iterations}, (_, i) => i + 1);
+
+                // Plot function value
+                Plotly.newPlot('fPlotDiv', [{ x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' }, name: 'f(x)' }], 
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: 'log' } });
+
+                // Plot gradient norm
+                Plotly.newPlot('gradPlotDiv', [{ x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' }, name: '||∇f(x)||' }], 
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: 'log' } });
+
+                // Plot step size
+                Plotly.newPlot('alphaPlotDiv', [{ x: alphaArr, y: data.alpha_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'purple' }, name: 'α (step size)' }], 
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'Step Size (α)', type: 'log' } });
                 
             } catch (error) {
+                document.getElementById('loadingOverlay').classList.remove('active');
                 alert("Backend error: " + error.message);
             }
         });

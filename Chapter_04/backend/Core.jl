@@ -83,6 +83,7 @@ function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimize
     state = OptimizationState(x_init, g_init, Matrix{Float64}(I, n, n), [])
     
     history_pts = [copy(state.x)]
+    alpha_hist = Float64[]  # Track step sizes
     div_info = DivergenceInfo()
 
     for iter in 1:max_iter
@@ -103,6 +104,7 @@ function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimize
         
         # 2. Perform line search
         alpha = compute_step_size(linesearch, f, ∇f, state, d)
+        push!(alpha_hist, alpha)  # Record step size
         
         # 3. Update position and compute new gradient
         x_next = state.x + alpha * d
@@ -130,7 +132,7 @@ function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimize
         push!(history_pts, copy(state.x))
     end
     
-    return history_pts, div_info
+    return history_pts, alpha_hist, div_info
 end
 
 # Default fallback for methods without memory updates
