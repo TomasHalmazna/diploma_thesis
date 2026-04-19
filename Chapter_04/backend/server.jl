@@ -3,9 +3,11 @@ using Oxygen
 using HTTP
 using LinearAlgebra
 
+# 1. Loading core and mathematical functions
 include("Core.jl")
+include("TestFunctions.jl") # NEW FUNCTIONS ARE LOADED HERE
 
-# include multidimensional optimizers
+# 2. Loading optimizers
 include(joinpath("Optimizers", "SteepestDescent.jl"))
 include(joinpath("Optimizers", "ConjugateGradient.jl"))
 include(joinpath("Optimizers", "NewtonMethod.jl"))
@@ -13,7 +15,7 @@ include(joinpath("Optimizers", "DFP.jl"))
 include(joinpath("Optimizers", "BFGS.jl"))
 include(joinpath("Optimizers", "LBFGS.jl"))
 
-# include line search methods
+# 3. Loading line search methods
 include(joinpath("LineSearch", "Backtracking.jl"))
 include(joinpath("LineSearch", "Bracketing.jl"))
 include(joinpath("LineSearch", "GoldenSectionSearch.jl"))
@@ -21,63 +23,55 @@ include(joinpath("LineSearch", "DichotomousSearch.jl"))
 include(joinpath("LineSearch", "QuadraticFitSearch.jl"))
 include(joinpath("LineSearch", "BrentsMethod.jl")) 
 
-# --- ROSENBROCK FUNCTION DEFINITIONS ---
-f_rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-
-function ∇f_rosen(x)
-    g1 = -2.0 * (1.0 - x[1]) - 400.0 * x[1] * (x[2] - x[1]^2)
-    g2 = 200.0 * (x[2] - x[1]^2)
-    return [g1, g2]
-end
-
-# Exact Hessian for the pure Newton's Method
-function Hf_rosen(x)
-    h11 = 2.0 - 400.0 * (x[2] - 3.0 * x[1]^2)
-    h12 = -400.0 * x[1]
-    h21 = -400.0 * x[1]
-    h22 = 200.0
-    return [h11 h12; h21 h22]
-end
-
 @get "/optimize" function(req::HTTP.Request)
     query = queryparams(req)
     
+    # Parsing basic parameters
+    selected_function = get(query, "function", "rosenbrock")
     selected_method = get(query, "method", "sd")
     cg_variant_str = get(query, "cg_variant", "PR_plus")
     
-    # Získání a parsování parametru m (defaultně 5)
-    m_str = get(query, "m", "5")
-    m_val = tryparse(Int, m_str)
-    if m_val === nothing || m_val < 1
-        m_val = 5 # Pojistka na backendu, kdyby selhal frontend
-    end
+    m_val = tryparse(Int, get(query, "m", "5"))
+    if m_val === nothing || m_val < 1 m_val = 5 end
     
     ls_type = get(query, "linesearch", "backtracking")
     auto_bracket = parse(Bool, get(query, "auto_bracket", "true"))
     bracket_a = parse(Float64, get(query, "bracket_a", "0.0"))
     bracket_b = parse(Float64, get(query, "bracket_b", "1.0"))
     
-    println("Request: Method=$selected_method, LS=$ls_type, AutoBracket=$auto_bracket")
+    # Parsing x0 and axis dimensions for plotting
+    x0_str = get(query, "x0", "-1.0,0.0")
+    x0 = parse.(Float64, split(x0_str, ","))
+    dim_x = parse(Int, get(query, "dim_x", "1"))
+    dim_y = parse(Int, get(query, "dim_y", "2"))
     
-    x0 = [-1.0, 0.0]
+    println("Request: Func=$selected_function, Method=$selected_method, x0=$x0")
     
-    # --- Instantiate Optimizer ---
+    # --- Assigning functions from TestFunctions.jl ---
+    if selected_function == "himmelblau"
+        f_obj, ∇f_obj, Hf_obj = f_himmel, ∇f_himmel, Hf_himmel
+    elseif selected_function == "sphere"
+        f_obj, ∇f_obj, Hf_obj = f_sphere, ∇f_sphere, Hf_sphere
+    else
+        f_obj, ∇f_obj, Hf_obj = f_rosen, ∇f_rosen, Hf_rosen
+    end
+    
+    # --- Optimizer instance ---
     if selected_method == "cg"
         method = ConjugateGradient(Symbol(cg_variant_str))
     elseif selected_method == "newton"
-        method = NewtonMethod(Hf_rosen)
+        method = NewtonMethod(Hf_obj)
     elseif selected_method == "dfp"
         method = DFPMethod()
     elseif selected_method == "bfgs"
         method = BFGSMethod()
     elseif selected_method == "lbfgs"
-        method = LBFGSMethod(m_val) # memory limit for LBFGS
+        method = LBFGSMethod(m_val)
     else
         method = SteepestDescent()
     end
-
     
-    # --- Instantiate Line Search ---
+    # --- Line search instance ---
     if ls_type == "gss"
         linesearch = GoldenSectionSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
     elseif ls_type == "dichotomous"
@@ -90,14 +84,26 @@ end
         linesearch = Backtracking()
     end
     
-    history = run_optimization(f_rosen, ∇f_rosen, x0, method, linesearch; max_iter=2000, tol=1e-4)
+    # Running optimization
+    history = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
     
-    x_hist = [pt[1] for pt in history]
-    y_hist = [pt[2] for pt in history]
+    dim_x = clamp(dim_x, 1, length(x0))
+    dim_y = clamp(dim_y, 1, length(x0))
 
-    # Calculate function values and gradient norms for the charts
-    f_hist = [f_rosen(pt) for pt in history]
-    grad_norm_hist = [norm(∇f_rosen(pt)) for pt in history]
+    # Syrová data pro detekci
+    f_hist_raw = [f_obj(pt) for pt in history]
+    grad_norm_hist_raw = [norm(∇f_obj(pt)) for pt in history]
+
+    # NEW: Detekce divergence (pokud matematické hodnoty "přetekly" Float64)
+    has_diverged = any(isnan.(f_hist_raw)) || any(isinf.(f_hist_raw))
+
+    # Čištění dat pro JSON
+    clean_val(v) = (isnan(v) || isinf(v)) ? nothing : v
+
+    x_hist = [clean_val(pt[dim_x]) for pt in history]
+    y_hist = [clean_val(pt[dim_y]) for pt in history]
+    f_hist = [clean_val(v) for v in f_hist_raw]
+    grad_norm_hist = [clean_val(v) for v in grad_norm_hist_raw]
     
     return Dict(
         "status" => "success",
@@ -105,7 +111,8 @@ end
         "x_hist" => x_hist,
         "y_hist" => y_hist,
         "f_hist" => f_hist,
-        "grad_norm_hist" => grad_norm_hist
+        "grad_norm_hist" => grad_norm_hist,
+        "diverged" => has_diverged # NEW: Posíláme info o divergenci
     )
 end
 

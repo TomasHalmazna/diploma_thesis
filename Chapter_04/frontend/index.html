@@ -6,86 +6,145 @@
     <title>Optimization Algorithm Visualizer</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; color: #333; }
+        body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; color: #333; }
         .panel { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
         .results-panel { background: #e6f7ff; border: 1px solid #91d5ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .control-group { margin-bottom: 15px; }
-        .hidden { display: none; }
-        select, input[type="number"], button { padding: 8px; font-size: 15px; margin-top: 5px; }
-        input[type="number"] { width: 80px; }
+        .hidden { display: none !important; }
+        select, input[type="number"], button { padding: 8px; font-size: 14px; margin-top: 5px; }
+        input[type="number"] { width: 60px; }
+        
         button { cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; font-weight: bold; padding: 10px 20px; }
         button:hover { background: #005A9E; }
+        .btn-run { width: 100%; font-size: 18px; margin-top: 15px;}
+        .btn-info { background: #28a745; margin-left: 10px; font-size: 12px; padding: 5px 10px; }
+        .btn-info:hover { background: #218838; }
+
         #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 20px; }
         hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
         
         details { margin-top: 15px; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         summary { font-weight: bold; cursor: pointer; outline: none; padding: 5px 0; }
         .mini-plot { width: 100%; height: 350px; margin-top: 10px; }
+        
+        .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 250px;}
+
+        .dim-inputs { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;}
+        .dim-box { background: #fff; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; line-height: 1.6;}
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .formula-box { background: #eee; padding: 10px; font-family: monospace; border-left: 4px solid #0078D7; margin: 10px 0;}
+        
+        /* Warning Styles */
+        .warning-box { color: #d9534f; background: #fdf015; padding: 10px; border-left: 4px solid #d9534f; font-weight: bold; border-radius: 4px; margin-top: 10px;}
     </style>
 </head>
 <body>
 
-    <h1>2D Optimization Visualizer</h1>
+    <h1>Optimization Algorithm Visualizer</h1>
     
     <div class="panel">
-        <div class="control-group">
-            <label for="methodSelect"><strong>Optimization Method:</strong></label><br>
-            <select id="methodSelect">
-                <option value="sd">Steepest Descent</option>
-                <option value="cg">Conjugate Gradient</option>
-                <option value="newton">Newton's Method (Exact)</option>
-                <option value="dfp">DFP (Quasi-Newton)</option>
-                <option value="bfgs">BFGS (Quasi-Newton)</option>
-                <option value="lbfgs">L-BFGS (Limited Memory)</option>
-            </select>
-        </div>
+        
+        <div class="flex-row">
+            <div class="flex-col">
+                <label for="functionSelect"><strong>Test Function:</strong></label>
+                <button class="btn-info" onclick="showModal()">ⓘ Info / Formula</button><br>
+                <select id="functionSelect" style="width: 100%;">
+                    <option value="rosenbrock">Rosenbrock (N-Dimensional)</option>
+                    <option value="himmelblau">Himmelblau (2D Only)</option>
+                    <option value="sphere">Elliptical Bowl (N-Dimensional)</option>
+                </select>
+                
+                <div id="dimensionGroup" style="margin-top: 15px;">
+                    <label for="dimInput"><strong>Dimensions (N):</strong></label>
+                    <input type="number" id="dimInput" value="2" min="2" max="10" step="1">
+                </div>
+            </div>
 
-        <div class="control-group hidden" id="cgVariantGroup">
-            <label for="cgVariantSelect"><strong>CG Variant:</strong></label><br>
-            <select id="cgVariantSelect">
-                <option value="PR_plus">Polak-Ribière+ (PR+)</option>
-                <option value="PR">Polak-Ribière (PR)</option>
-                <option value="FR">Fletcher-Reeves (FR)</option>
-            </select>
-        </div>
+            <div class="flex-col">
+                <label><strong>Starting Point (x₀):</strong></label>
+                <div id="x0Inputs" class="dim-inputs">
+                    </div>
 
-        <div class="control-group hidden" id="lbfgsOptionsGroup">
-            <label for="mInput"><strong>Memory size (m):</strong></label><br>
-            <input type="number" id="mInput" value="5" min="1" step="1">
-            <small style="color: #666; margin-left: 10px;">(Typically 5 to 20 vectors)</small>
+                <div id="plotAxesGroup" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
+                    <label><strong>2D Plot Slice (Axes):</strong></label><br>
+                    X-Axis: <select id="axisX" style="width: 60px;"></select>
+                    Y-Axis: <select id="axisY" style="width: 60px;"></select>
+                </div>
+            </div>
         </div>
 
         <hr>
 
-        <div class="control-group">
-            <label for="lsSelect"><strong>Line Search Method:</strong></label><br>
-            <select id="lsSelect">
-                <option value="backtracking">Backtracking (Inexact)</option>
-                <option value="gss">Golden Section Search (Exact)</option>
-                <option value="dichotomous">Dichotomous Search (Exact)</option>
-                <option value="quadratic">Quadratic Fit Search (Exact)</option>
-                <option value="brent">Brent's Method (Exact)</option>
-            </select>
-        </div>
+        <div class="flex-row">
+            <div class="flex-col">
+                <div class="control-group">
+                    <label for="methodSelect"><strong>Optimization Method:</strong></label><br>
+                    <select id="methodSelect" style="width: 100%;">
+                        <option value="sd">Steepest Descent</option>
+                        <option value="cg">Conjugate Gradient</option>
+                        <option value="newton">Newton's Method (Exact)</option>
+                        <option value="dfp">DFP (Quasi-Newton)</option>
+                        <option value="bfgs">BFGS (Quasi-Newton)</option>
+                        <option value="lbfgs">L-BFGS (Limited Memory)</option>
+                    </select>
+                </div>
 
-        <div class="control-group hidden" id="exactLsOptionsGroup">
-            <label>
-                <input type="checkbox" id="autoBracketCb" checked> 
-                <strong>Use Automatic Bracketing</strong>
-            </label>
-            
-            <div id="manualIntervalDiv" class="hidden" style="margin-top: 10px;">
-                <label>Start (a): <input type="number" id="bracketA" value="0.0" step="0.1"></label>
-                <label style="margin-left: 15px;">End (b): <input type="number" id="bracketB" value="1.0" step="0.1"></label>
+                <div class="control-group hidden" id="cgVariantGroup">
+                    <label for="cgVariantSelect"><strong>CG Variant:</strong></label><br>
+                    <select id="cgVariantSelect" style="width: 100%;">
+                        <option value="PR_plus">Polak-Ribière+ (PR+)</option>
+                        <option value="PR">Polak-Ribière (PR)</option>
+                        <option value="FR">Fletcher-Reeves (FR)</option>
+                    </select>
+                </div>
+
+                <div class="control-group hidden" id="lbfgsOptionsGroup">
+                    <label for="mInput"><strong>Memory size (m):</strong></label><br>
+                    <input type="number" id="mInput" value="5" min="1" step="1">
+                </div>
+            </div>
+
+            <div class="flex-col">
+                <div class="control-group">
+                    <label for="lsSelect"><strong>Line Search Method:</strong></label><br>
+                    <select id="lsSelect" style="width: 100%;">
+                        <option value="backtracking">Backtracking (Inexact)</option>
+                        <option value="gss">Golden Section Search (Exact)</option>
+                        <option value="dichotomous">Dichotomous Search (Exact)</option>
+                        <option value="quadratic">Quadratic Fit Search (Exact)</option>
+                        <option value="brent">Brent's Method (Exact)</option>
+                    </select>
+                </div>
+
+                <div class="control-group hidden" id="exactLsOptionsGroup">
+                    <label>
+                        <input type="checkbox" id="autoBracketCb" checked> 
+                        <strong>Use Auto Bracketing</strong>
+                    </label>
+                    <div id="manualIntervalDiv" class="hidden" style="margin-top: 5px;">
+                        a: <input type="number" id="bracketA" value="0.0" step="0.1">
+                        b: <input type="number" id="bracketB" value="1.0" step="0.1">
+                    </div>
+                </div>
             </div>
         </div>
 
-        <button id="runBtn">Run Optimization</button>
+        <button id="runBtn" class="btn-run">Run Optimization</button>
     </div>
 
     <div id="resultsPanel" class="results-panel hidden">
         <h3 style="margin-top: 0;">Optimization Results</h3>
-        <p style="font-size: 18px;"><strong>Total Iterations: <span id="iterCount">0</span></strong></p>
+        <p style="font-size: 18px; margin-bottom: 5px;"><strong>Total Iterations: <span id="iterCount">0</span></strong></p>
+        
+        <div id="divergenceWarning" class="warning-box hidden">
+            ⚠️ Divergence Detected: The method became numerically unstable. The step size or gradient exceeded the computational limits (Overflow/NaN), likely due to a poor starting point or an inappropriate line search.
+        </div>
         
         <details id="fDetails">
             <summary>► Show Function Value Evolution</summary>
@@ -100,174 +159,265 @@
     
     <div id="plotDiv"></div>
 
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Function Details</h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
     <script>
-        // --- UI Logic ---
+        const functionSelect = document.getElementById('functionSelect');
+        const dimInput = document.getElementById('dimInput');
+        const x0Inputs = document.getElementById('x0Inputs');
+        const axisX = document.getElementById('axisX');
+        const axisY = document.getElementById('axisY');
+        
+        // --- Dynamic Dimension Logic ---
+        function updateDimensions() {
+            const func = functionSelect.value;
+            let N = parseInt(dimInput.value);
+            
+            if (func === 'himmelblau') {
+                document.getElementById('dimensionGroup').classList.add('hidden');
+                N = 2; // Himmelblau is strictly 2D
+            } else {
+                document.getElementById('dimensionGroup').classList.remove('hidden');
+            }
+
+            // Generate x0 inputs
+            x0Inputs.innerHTML = '';
+            axisX.innerHTML = '';
+            axisY.innerHTML = '';
+            
+            for(let i = 1; i <= N; i++) {
+                // Determine default start value
+                let val = 0.0;
+                if (func === 'rosenbrock' && i === 1) val = -1.0;
+                if (func === 'himmelblau' && i === 1) val = -0.27;
+                if (func === 'himmelblau' && i === 2) val = -0.9;
+                if (func === 'sphere') { val = (i % 2 === 0) ? 3.0 : -4.0; } // Alternating start
+
+                x0Inputs.innerHTML += `<div class="dim-box">x<sub>${i}</sub>: <input type="number" id="x0_${i}" value="${val}" step="0.5"></div>`;
+                
+                axisX.innerHTML += `<option value="${i}">x${i}</option>`;
+                axisY.innerHTML += `<option value="${i}" ${i === 2 ? 'selected' : ''}>x${i}</option>`;
+            }
+
+            drawContourBackground();
+        }
+
+        dimInput.addEventListener('change', updateDimensions);
+        functionSelect.addEventListener('change', updateDimensions);
+        axisX.addEventListener('change', drawContourBackground);
+        axisY.addEventListener('change', drawContourBackground);
+
+        // --- Rest of UI Logic ---
         const methodSelect = document.getElementById('methodSelect');
         const cgVariantGroup = document.getElementById('cgVariantGroup');
         const lbfgsOptionsGroup = document.getElementById('lbfgsOptionsGroup');
         
         methodSelect.addEventListener('change', () => {
-            // Hide specific menus first
             cgVariantGroup.classList.add('hidden');
             lbfgsOptionsGroup.classList.add('hidden');
-
-            // Show relevant menu based on selection
-            if (methodSelect.value === 'cg') {
-                cgVariantGroup.classList.remove('hidden');
-            } else if (methodSelect.value === 'lbfgs') {
-                lbfgsOptionsGroup.classList.remove('hidden');
-            }
+            if (methodSelect.value === 'cg') cgVariantGroup.classList.remove('hidden');
+            else if (methodSelect.value === 'lbfgs') lbfgsOptionsGroup.classList.remove('hidden');
         });
 
         const lsSelect = document.getElementById('lsSelect');
         const exactLsOptionsGroup = document.getElementById('exactLsOptionsGroup');
         const autoBracketCb = document.getElementById('autoBracketCb');
         const manualIntervalDiv = document.getElementById('manualIntervalDiv');
-
         const exactMethods = ['gss', 'dichotomous', 'quadratic', 'brent'];
 
         lsSelect.addEventListener('change', () => {
-            if (exactMethods.includes(lsSelect.value)) {
-                exactLsOptionsGroup.classList.remove('hidden');
-            } else {
-                exactLsOptionsGroup.classList.add('hidden');
-            }
+            if (exactMethods.includes(lsSelect.value)) exactLsOptionsGroup.classList.remove('hidden');
+            else exactLsOptionsGroup.classList.add('hidden');
         });
 
         autoBracketCb.addEventListener('change', () => {
-            if (autoBracketCb.checked) {
-                manualIntervalDiv.classList.add('hidden');
-            } else {
-                manualIntervalDiv.classList.remove('hidden');
+            if (autoBracketCb.checked) manualIntervalDiv.classList.add('hidden');
+            else manualIntervalDiv.classList.remove('hidden');
+        });
+
+        document.getElementById('fDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('fPlotDiv'); });
+        document.getElementById('gradDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('gradPlotDiv'); });
+
+        // --- Modal Logic ---
+        const functionData = {
+            rosenbrock: {
+                title: "Rosenbrock Function",
+                body: `<p>Also known as the Valley or Banana function, it is a popular test problem for gradient-based optimization algorithms.</p>
+                       <div class="formula-box">f(x) = ∑ [ 100(x_{i+1} - x_i²)² + (1 - x_i)² ]</div>
+                       <p><strong>Global Minimum:</strong> f(x*) = 0 at x* = (1, 1, ..., 1).</p>
+                       <p><strong>Characteristics:</strong> The global minimum lies inside a long, narrow, parabolic shaped flat valley. Finding the valley is trivial, but converging to the global minimum is difficult.</p>`
+            },
+            himmelblau: {
+                title: "Himmelblau's Function",
+                body: `<p>A multi-modal test function used to evaluate optimization algorithms.</p>
+                       <div class="formula-box">f(x, y) = (x² + y - 11)² + (x + y² - 7)²</div>
+                       <p><strong>Global Minima:</strong> Has four identical local minima where f(x*) = 0.</p>
+                       <ul>
+                           <li>(3.0, 2.0)</li>
+                           <li>(-2.805, 3.131)</li>
+                           <li>(-3.779, -3.283)</li>
+                           <li>(3.584, -1.848)</li>
+                       </ul>`
+            },
+            sphere: {
+                title: "Elliptical Bowl Function",
+                body: `<p>A strictly convex, generalized formulation of the Sphere function with poor conditioning.</p>
+                       <div class="formula-box">f(x) = ∑ (i · x_i²)</div>
+                       <p><strong>Global Minimum:</strong> f(x*) = 0 at x* = (0, 0, ..., 0).</p>
+                       <p><strong>Characteristics:</strong> Because each dimension is scaled by its index 'i', the level sets are hyperellipsoids rather than hyperspheres. This illustrates the "zig-zag" behavior of the Steepest Descent method.</p>`
             }
-        });
+        };
 
-        document.getElementById('fDetails').addEventListener('toggle', function() {
-            if(this.open) Plotly.Plots.resize('fPlotDiv');
-        });
-        document.getElementById('gradDetails').addEventListener('toggle', function() {
-            if(this.open) Plotly.Plots.resize('gradPlotDiv');
-        });
+        function showModal() {
+            const func = functionSelect.value;
+            document.getElementById('modalTitle').innerText = functionData[func].title;
+            document.getElementById('modalBody').innerHTML = functionData[func].body;
+            document.getElementById('infoModal').style.display = "block";
+        }
 
-        // --- Plotly Base Logic ---
-        function generateContourData() {
-            let x_vals = [], y_vals = [], z_vals = [];
-            for (let i = -1.5; i <= 1.5; i += 0.05) x_vals.push(i);
-            for (let i = -0.5; i <= 1.5; i += 0.05) y_vals.push(i);
+        function closeModal() {
+            document.getElementById('infoModal').style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('infoModal')) closeModal();
+        }
+
+        // --- Plotly Contour Logic ---
+        let currentLayout = {};
+        
+        function drawContourBackground() {
+            const func = functionSelect.value;
+            const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
             
+            const uIdx = parseInt(axisX.value) - 1; // JS is 0-indexed
+            const vIdx = parseInt(axisY.value) - 1;
+            
+            let x_range, y_range;
+            let x_vals = [], y_vals = [], z_vals = [];
+
+            if (func === 'rosenbrock') {
+                x_range = [-2.0, 2.0]; y_range = [-1.0, 3.0];
+            } else {
+                x_range = [-5.0, 5.0]; y_range = [-5.0, 5.0];
+            }
+
+            for (let i = x_range[0]; i <= x_range[1]; i += 0.05) x_vals.push(i);
+            for (let i = y_range[0]; i <= y_range[1]; i += 0.05) y_vals.push(i);
+
+            // Create a base optimal array to freeze non-plotted dimensions
+            let base_x = new Array(N).fill(0.0);
+            if (func === 'rosenbrock') base_x.fill(1.0);
+
             for (let j = 0; j < y_vals.length; j++) {
                 let row = [];
                 for (let i = 0; i < x_vals.length; i++) {
-                    let x = x_vals[i], y = y_vals[j];
-                    row.push(Math.pow(1 - x, 2) + 100 * Math.pow(y - Math.pow(x, 2), 2));
+                    let temp_x = [...base_x];
+                    temp_x[uIdx] = x_vals[i];
+                    if (uIdx !== vIdx) temp_x[vIdx] = y_vals[j]; // Allow 1D slice plot
+
+                    let z = 0;
+                    if (func === 'rosenbrock') {
+                        for(let k=0; k<N-1; k++) z += 100*Math.pow(temp_x[k+1] - temp_x[k]*temp_x[k], 2) + Math.pow(1 - temp_x[k], 2);
+                    } else if (func === 'himmelblau') {
+                        let x = temp_x[0], y = temp_x[1];
+                        z = Math.pow(x*x + y - 11, 2) + Math.pow(x + y*y - 7, 2);
+                    } else if (func === 'sphere') {
+                        for(let k=0; k<N; k++) z += (k+1)*temp_x[k]*temp_x[k];
+                    }
+                    row.push(z);
                 }
                 z_vals.push(row);
             }
-            return { x: x_vals, y: y_vals, z: z_vals };
+
+            currentLayout = {
+                title: `${functionSelect.options[functionSelect.selectedIndex].text} Slice (x${uIdx+1}, x${vIdx+1})`,
+                xaxis: { title: `x${uIdx+1}`, range: x_range },
+                yaxis: { title: `x${vIdx+1}`, range: y_range }
+            };
+            
+            const contourTrace = {
+                z: z_vals, x: x_vals, y: y_vals,
+                type: 'contour', colorscale: 'Viridis',
+                contours: { coloring: 'lines' }
+            };
+
+            Plotly.newPlot('plotDiv', [contourTrace], currentLayout);
         }
 
-        const contourData = generateContourData();
-        const mainLayout = {
-            title: 'Rosenbrock Function Trajectory',
-            xaxis: { title: 'x₁', range: [-1.5, 1.5] },
-            yaxis: { title: 'x₂', range: [-0.5, 1.5] }
-        };
-        
-        const contourTrace = {
-            z: contourData.z, x: contourData.x, y: contourData.y,
-            type: 'contour', colorscale: 'Viridis',
-            contours: { coloring: 'lines' }
-        };
-
-        Plotly.newPlot('plotDiv', [contourTrace], mainLayout);
+        // Initialize
+        updateDimensions();
 
         // --- API Call Logic ---
         document.getElementById('runBtn').addEventListener('click', async () => {
+            const func = functionSelect.value;
             const method = methodSelect.value;
-            const cgVariant = document.getElementById('cgVariantSelect').value;
             const ls = lsSelect.value;
-            const autoBracket = autoBracketCb.checked;
-            const bracketA = document.getElementById('bracketA').value;
-            const bracketB = document.getElementById('bracketB').value;
             
-            // Validation for L-BFGS m parameter
+            // Build x0 array from dynamic inputs
+            const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
+            let x0_arr = [];
+            for(let i=1; i<=N; i++) {
+                x0_arr.push(document.getElementById(`x0_${i}`).value);
+            }
+            const x0_str = x0_arr.join(",");
+            
+            const dim_x = axisX.value;
+            const dim_y = axisY.value;
+
             let mValue = 5;
             if (method === 'lbfgs') {
-                const rawM = document.getElementById('mInput').value;
-                const parsedM = Number(rawM);
-                
-                // Check if parsedM is a valid positive integer
+                const parsedM = Number(document.getElementById('mInput').value);
                 if (isNaN(parsedM) || !Number.isInteger(parsedM) || parsedM < 1) {
-                    alert("Error: Memory size (m) must be a positive integer (e.g., 5, 10, 20).");
+                    alert("Error: Memory size (m) must be a positive integer.");
                     return; 
                 }
                 mValue = parsedM;
             }
 
             let methodLabel = methodSelect.options[methodSelect.selectedIndex].text;
-            if (method === 'cg') {
-                methodLabel = document.getElementById('cgVariantSelect').options[document.getElementById('cgVariantSelect').selectedIndex].text;
-            } else if (method === 'lbfgs') {
-                methodLabel = `L-BFGS (m=${mValue})`;
-            }
+            if (method === 'cg') methodLabel = document.getElementById('cgVariantSelect').options[document.getElementById('cgVariantSelect').selectedIndex].text;
+            else if (method === 'lbfgs') methodLabel = `L-BFGS (m=${mValue})`;
             
-            const url = `http://127.0.0.1:8080/optimize?method=${method}&cg_variant=${cgVariant}&m=${mValue}&linesearch=${ls}&auto_bracket=${autoBracket}&bracket_a=${bracketA}&bracket_b=${bracketB}`;
+            const url = `http://127.0.0.1:8080/optimize?function=${func}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
             
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.status !== "success") {
-                    alert("Optimization failed or returned an error.");
-                    return;
-                }
+                if (data.status !== "success") return alert("Optimization failed.");
+
+                drawContourBackground();
 
                 const trajectoryTrace = {
-                    x: data.x_hist,
-                    y: data.y_hist,
-                    mode: 'lines+markers',
-                    type: 'scatter',
-                    line: { color: 'red', width: 2.5 },
-                    marker: { color: 'red', size: 5 },
-                    name: `${methodLabel}`
+                    x: data.x_hist, y: data.y_hist, mode: 'lines+markers', type: 'scatter',
+                    line: { color: 'red', width: 2.5 }, marker: { color: 'red', size: 5 }, name: methodLabel
                 };
-                Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], mainLayout);
+                Plotly.addTraces('plotDiv', trajectoryTrace);
 
+                // Update Results Panel
                 document.getElementById('resultsPanel').classList.remove('hidden');
                 document.getElementById('iterCount').innerText = data.iterations;
 
-                const iterationsArray = Array.from({length: data.iterations + 1}, (_, i) => i);
+                // Handle Divergence Warning
+                const warnBox = document.getElementById('divergenceWarning');
+                if (data.diverged) {
+                    warnBox.classList.remove('hidden');
+                } else {
+                    warnBox.classList.add('hidden');
+                }
 
-                const fTrace = {
-                    x: iterationsArray,
-                    y: data.f_hist,
-                    mode: 'lines+markers',
-                    type: 'scatter',
-                    line: { color: 'blue' },
-                    name: 'f(x)'
-                };
-                Plotly.newPlot('fPlotDiv', [fTrace], {
-                    margin: { t: 20, b: 40, l: 50, r: 20 },
-                    xaxis: { title: 'Iteration (k)' },
-                    yaxis: { title: 'f(x)', type: 'log' }
-                });
-
-                const gradTrace = {
-                    x: iterationsArray,
-                    y: data.grad_norm_hist,
-                    mode: 'lines+markers',
-                    type: 'scatter',
-                    line: { color: 'green' },
-                    name: '||∇f(x)||'
-                };
-                Plotly.newPlot('gradPlotDiv', [gradTrace], {
-                    margin: { t: 20, b: 40, l: 50, r: 20 },
-                    xaxis: { title: 'Iteration (k)' },
-                    yaxis: { title: '||∇f(x)||', type: 'log' }
-                });
+                const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
+                Plotly.newPlot('fPlotDiv', [{ x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' }, name: 'f(x)' }], { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: 'log' } });
+                Plotly.newPlot('gradPlotDiv', [{ x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' }, name: '||∇f(x)||' }], { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: 'log' } });
                 
             } catch (error) {
-                alert("Error connecting to Julia backend: " + error.message);
+                alert("Backend error: " + error.message);
             }
         });
     </script>
