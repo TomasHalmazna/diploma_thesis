@@ -71,13 +71,13 @@
                 <select id="functionSelect" style="width: 100%;">
                     <option value="rosenbrock">Rosenbrock (N-Dimensional)</option>
                     <option value="himmelblau">Himmelblau (2D Only)</option>
-                    <option value="sphere">Axis Parallel Hyper-Ellipsoid</option>
+                    <option value="sphere">Axis Parallel Hyper-Ellipsoid (N-Dimensional)</option>
                     <option value="custom">Custom (User Defined)</option>
                 </select>
                 
                 <div id="customGroup" class="hidden" style="margin-top: 10px;">
                     <label><strong>Formula (Julia/AD):</strong></label>
-                    <input type="text" id="customFormula" style="width: 100%;" placeholder="e.g. log(x[1]) + x[2]^2">
+                    <input type="text" id="customFormula" style="width: 100%;" placeholder="e.g. sin(x[1]) + x[2]^2">
                     <small style="color: #666;">Use x[1], x[2], etc. Exact derivatives via Automatic Differentiation.</small>
                 </div>
                 
@@ -89,7 +89,7 @@
 
             <div class="flex-col">
                 <label><strong>Starting Point (x₀):</strong></label>
-                <small style="display: block; color: #d9534f; margin-bottom: 5px;">⚠ Ensure x₀ is within the function's domain (e.g., &gt; 0 for log).</small>
+                <small style="display: block; color: #d9534f; margin-bottom: 5px;">⚠ Ensure initial point is within the function's domain.</small>
                 <div id="x0Inputs" class="dim-inputs"></div>
 
                 <div id="plotAxesGroup" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
@@ -102,7 +102,7 @@
                     </div>
                     <br>
                     <label style="margin-top: 10px; display: inline-block;">
-                        <input type="checkbox" id="equalAxesCb"> <strong>Equal Axes (Orthogonal Steps)</strong>
+                        <input type="checkbox" id="equalAxesCb"> <strong>Equal Axes</strong>
                     </label>
                 </div>
             </div>
