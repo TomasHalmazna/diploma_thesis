@@ -1,4 +1,9 @@
 # backend/server.jl
+using Pkg
+Pkg.activate(@__DIR__) # Activates the environment in the current directory (where this server.jl is located)
+Pkg.instantiate()      # Checks the Manifest and downloads the exactly the same versions of packages
+
+
 using Oxygen
 using HTTP
 using LinearAlgebra
