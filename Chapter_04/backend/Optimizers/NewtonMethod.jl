@@ -10,7 +10,6 @@ function compute_direction(method::NewtonMethod, state::OptimizationState)
     H = method.Hf(state.x)
     
     # Solve the linear system H * d = -g instead of directly computing the inverse.
-    # This is numerically much more stable and efficient.
     d = -(H \ state.gradient)
     
     return d

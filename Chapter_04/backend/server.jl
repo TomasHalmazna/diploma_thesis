@@ -25,45 +25,33 @@ include(joinpath("LineSearch", "QuadraticFitSearch.jl"))
 include(joinpath("LineSearch", "BrentsMethod.jl")) 
 
 # Helper function to create a custom user-defined function and its derivatives
-function create_custom_function(func_str::String)
+# takes x0 as an argument to check if the function is defined at the starting point
+function create_custom_function(func_str::String, x0::Vector{Float64})
     try
-        # URL Decoding: Handle %5B -> [, %5D -> ], %5E -> ^, etc.
         decoded_str = HTTP.unescapeuri(func_str)
-        
-        # Remove any LaTeX backslashes (e.g., \sin -> sin)
         clean_str = replace(decoded_str, "\\" => "")
         
         println("[DEBUG] Received raw: $func_str")
         println("[DEBUG] After cleanup: $clean_str")
 
-        # Parse string to an expression AST
         expr = Meta.parse(clean_str)
-        
-        # Create raw anonymous function using eval
         f_raw = eval(:(x -> $expr))
-        
-        # Wrap the function in Base.invokelatest to force Julia to use the latest compiled version
         f = x -> Base.invokelatest(f_raw, x)
         
-        println("[DEBUG] Function created and wrapped successfully")
-        
-        # Automatic differentiation for exact gradients and Hessians
         ∇f = x -> ForwardDiff.gradient(f, x)
         Hf = x -> ForwardDiff.hessian(f, x)
         
-        # Initial test calls to verify dimension validity and ForwardDiff compatibility
-        test_vec = zeros(10)
-        test_result = f(test_vec)
-        ∇f(test_vec)
+        # Test call using the ACTUAL starting point x0
+        test_result = f(x0)
+        ∇f(x0)
         
         if isnan(test_result) || isinf(test_result)
-            return nothing, nothing, nothing, "Function evaluates to NaN or Inf"
+            return nothing, nothing, nothing, "Function evaluates to NaN or Inf at x0"
         end
         
-        println("[DEBUG] Custom function validation successful!")
         return f, ∇f, Hf, nothing
     catch e
-        error_msg = "Error in custom function: " * string(e)
+        error_msg = "Error in custom function (check syntax or domain at x0): " * string(e)
         println("[ERROR] $error_msg")
         return nothing, nothing, nothing, error_msg
     end
@@ -92,11 +80,11 @@ end
     
     println("Request: Func=$selected_function, Method=$selected_method, x0=$x0")
     
-    # --- Function selection ---
     f_obj, ∇f_obj, Hf_obj = nothing, nothing, nothing
     
     if selected_function == "custom"
-        f_obj, ∇f_obj, Hf_obj, err = create_custom_function(custom_formula)
+        # x0 to check if the function is defined at the starting point and to provide better error messages
+        f_obj, ∇f_obj, Hf_obj, err = create_custom_function(custom_formula, x0)
         if err !== nothing
             return Dict("status" => "error", "message" => err)
         end
@@ -108,7 +96,6 @@ end
         f_obj, ∇f_obj, Hf_obj = f_rosen, ∇f_rosen, Hf_rosen
     end
     
-    # --- Optimizer instance ---
     if selected_method == "cg"
         method = ConjugateGradient(Symbol(cg_variant_str))
     elseif selected_method == "newton"
@@ -123,7 +110,6 @@ end
         method = SteepestDescent()
     end
     
-    # --- Line search instance ---
     if ls_type == "gss"
         linesearch = GoldenSectionSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
     elseif ls_type == "dichotomous"
@@ -136,7 +122,6 @@ end
         linesearch = Backtracking()
     end
     
-    # Running optimization
     try
         history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
         
@@ -145,17 +130,58 @@ end
 
         clean_val(v) = (isnan(v) || isinf(v)) ? nothing : v
 
+        # Extract 2D slice for plotting
         x_hist = [clean_val(pt[dim_x]) for pt in history]
         y_hist = [clean_val(pt[dim_y]) for pt in history]
+        
+        # Extract full N-dimensional history for tooltips
+        full_x_hist = [[clean_val(v) for v in pt] for pt in history]
+        
         f_hist = [clean_val(f_obj(pt)) for pt in history]
         grad_norm_hist = [clean_val(norm(∇f_obj(pt))) for pt in history]
         alpha_hist_clean = [clean_val(v) for v in alpha_hist]
         
+        # --- Generating a dynamic contour grid ---
+        x_min, x_max = minimum(filter(x -> x !== nothing, x_hist)), maximum(filter(x -> x !== nothing, x_hist))
+        y_min, y_max = minimum(filter(x -> x !== nothing, y_hist)), maximum(filter(x -> x !== nothing, y_hist))
+        
+        # Protection against single-point trajectory
+        if x_min == x_max; x_min -= 1.0; x_max += 1.0; end
+        if y_min == y_max; y_min -= 1.0; y_max += 1.0; end
+        
+        # Zoom out a bit to ensure we capture the landscape around the trajectory
+        pad_x = max(2.0, (x_max - x_min) * 1.5)
+        pad_y = max(2.0, (y_max - y_min) * 1.5)
+        
+        # Limit the resolution to prevent excessive computation for very large ranges
+        RESOLUTION = 150
+        x_grid = range(x_min - pad_x, stop=x_max + pad_x, length=RESOLUTION)
+        y_grid = range(y_min - pad_y, stop=y_max + pad_y, length=RESOLUTION)
+        z_grid = Matrix{Union{Float64, Nothing}}(nothing, RESOLUTION, RESOLUTION)
+        
+        base_x = copy(x0)
+        for (j, yv) in enumerate(y_grid)
+            for (i, xv) in enumerate(x_grid)
+                temp_x = copy(base_x)
+                temp_x[dim_x] = xv
+                temp_x[dim_y] = yv
+                try
+                    val = f_obj(temp_x)
+                    if !isnan(val) && !isinf(val)
+                        z_grid[j, i] = val
+                    end
+                catch
+                    # Out of domain -> leave as nothing (JSON null)
+                end
+            end
+        end
+
         return Dict(
             "status" => div_info.diverged ? "diverged" : "success",
             "iterations" => length(history) - 1,
             "x_hist" => x_hist,
             "y_hist" => y_hist,
+            "full_x_hist" => full_x_hist, # NEW: Transmitting full N-dim history
             "f_hist" => f_hist,
             "grad_norm_hist" => grad_norm_hist,
             "alpha_hist" => alpha_hist_clean,
@@ -163,10 +189,20 @@ end
             "divergence_reason" => div_info.reason,
             "divergence_iteration" => div_info.iteration,
             "final_grad_norm" => div_info.grad_norm,
-            "final_f_value" => div_info.f_value
+            "final_f_value" => div_info.f_value,
+            "contour_x" => collect(x_grid),
+            "contour_y" => collect(y_grid),
+            "contour_z" => z_grid
         )
     catch e
-        return Dict("status" => "error", "message" => "Runtime error: " * string(e))
+        # Domain errors or math errors (like log of negative number) are common when the optimization goes out of bounds.
+        # We catch them and provide a user-friendly message.
+        error_string = string(e)
+        if occursin("DomainError", error_string) || occursin("Math", error_string)
+            return Dict("status" => "error", "message" => "The method left the function's domain (DomainError). Unconstrained optimization algorithms do not know the boundaries of functions (such as logarithm or square root). Try a different starting point or a smaller step (e.g., a more precise line search).")
+        else
+            return Dict("status" => "error", "message" => "Runtime error: " * error_string)
+        end
     end
 end
 
@@ -182,4 +218,4 @@ function cors_middleware(handler)
 end
 
 println("Starting server at http://127.0.0.1:8080 ...")
-serve(port=8080, middleware=[cors_middleware])
+serve(port=8080, middleware=[cors_middleware])  

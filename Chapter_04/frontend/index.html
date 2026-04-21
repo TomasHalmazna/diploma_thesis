@@ -15,6 +15,7 @@
         .hidden { display: none !important; }
         select, input[type="number"], button { padding: 8px; font-size: 14px; margin-top: 5px; }
         input[type="number"] { width: 60px; }
+        input[type="text"] { padding: 8px; font-size: 14px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
         
         button { cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; font-weight: bold; padding: 10px 20px; }
         button:hover { background: #005A9E; }
@@ -61,7 +62,6 @@
 
     <h1>Optimization Algorithm Visualizer</h1>
     
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-container">
             <div class="spinner"></div>
@@ -78,14 +78,14 @@
                 <select id="functionSelect" style="width: 100%;">
                     <option value="rosenbrock">Rosenbrock (N-Dimensional)</option>
                     <option value="himmelblau">Himmelblau (2D Only)</option>
-                    <option value="sphere">Elliptical Bowl (N-Dimensional)</option>
+                    <option value="sphere">Axis Parallel Hyper-Ellipsoid</option>
                     <option value="custom">Custom (User Defined)</option>
                 </select>
                 
                 <div id="customGroup" class="hidden" style="margin-top: 10px;">
                     <label><strong>Formula (Julia/AD):</strong></label>
-                    <input type="text" id="customFormula" style="width: 100%;" placeholder="e.g. x[1]^2 + sin(x[2])">
-                    <small style="color: #666;">Use x[1], x[2], etc. Derivatives are exact (Automatic Differentiation).</small>
+                    <input type="text" id="customFormula" style="width: 100%;" placeholder="e.g. log(x[1]) + x[2]^2">
+                    <small style="color: #666;">Use x[1], x[2], etc. Exact derivatives via Automatic Differentiation.</small>
                 </div>
                 
                 <div id="dimensionGroup" style="margin-top: 15px;">
@@ -96,13 +96,22 @@
 
             <div class="flex-col">
                 <label><strong>Starting Point (x₀):</strong></label>
+                <small style="display: block; color: #d9534f; margin-bottom: 5px;">⚠ Ensure x₀ is within the function's domain (e.g., &gt; 0 for log).</small>
                 <div id="x0Inputs" class="dim-inputs">
-                    </div>
+                </div>
 
                 <div id="plotAxesGroup" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
                     <label><strong>2D Plot Slice (Axes):</strong></label><br>
-                    X-Axis: <select id="axisX" style="width: 60px;"></select>
-                    Y-Axis: <select id="axisY" style="width: 60px;"></select>
+                    <div style="display: inline-block; margin-right: 15px;">
+                        X-Axis: <select id="axisX" style="width: 60px;"></select>
+                    </div>
+                    <div style="display: inline-block;">
+                        Y-Axis: <select id="axisY" style="width: 60px;"></select>
+                    </div>
+                    <br>
+                    <label style="margin-top: 10px; display: inline-block;">
+                        <input type="checkbox" id="equalAxesCb"> <strong>Equal Axes (Orthogonal Steps)</strong>
+                    </label>
                 </div>
             </div>
         </div>
@@ -224,6 +233,7 @@
             
             if (func === 'himmelblau') {
                 document.getElementById('dimensionGroup').classList.add('hidden');
+                document.getElementById('customGroup').classList.add('hidden');
                 N = 2; // Himmelblau is strictly 2D
             } else if (func === 'custom') {
                 document.getElementById('dimensionGroup').classList.remove('hidden');
@@ -240,26 +250,36 @@
             axisY.innerHTML = '';
             
             for(let i = 1; i <= N; i++) {
-                // Determine default start value
                 let val = 0.0;
                 if (func === 'rosenbrock' && i === 1) val = -1.0;
                 if (func === 'himmelblau' && i === 1) val = -0.27;
                 if (func === 'himmelblau' && i === 2) val = -0.9;
-                if (func === 'sphere') { val = (i % 2 === 0) ? 3.0 : -4.0; } // Alternating start
+                if (func === 'sphere') { val = (i % 2 === 0) ? 3.0 : -4.0; } 
 
                 x0Inputs.innerHTML += `<div class="dim-box">x<sub>${i}</sub>: <input type="number" id="x0_${i}" value="${val}" step="0.5"></div>`;
                 
                 axisX.innerHTML += `<option value="${i}">x${i}</option>`;
                 axisY.innerHTML += `<option value="${i}" ${i === 2 ? 'selected' : ''}>x${i}</option>`;
             }
-
-            drawContourBackground();
         }
 
         dimInput.addEventListener('change', updateDimensions);
         functionSelect.addEventListener('change', updateDimensions);
-        axisX.addEventListener('change', drawContourBackground);
-        axisY.addEventListener('change', drawContourBackground);
+
+        // --- Equal Axes Real-time Update ---
+        document.getElementById('equalAxesCb').addEventListener('change', function() {
+            const update = {};
+            if (this.checked) {
+                update['yaxis.scaleanchor'] = 'x';
+                update['yaxis.scaleratio'] = 1;
+            } else {
+                update['yaxis.scaleanchor'] = null;
+            }
+            // Only update layout if plot exists
+            if (document.getElementById('plotDiv').data) {
+                Plotly.relayout('plotDiv', update);
+            }
+        });
 
         // --- Rest of UI Logic ---
         const methodSelect = document.getElementById('methodSelect');
@@ -319,8 +339,8 @@
                        </ul>`
             },
             sphere: {
-                title: "Elliptical Bowl Function",
-                body: `<p>A strictly convex, generalized formulation of the Sphere function with poor conditioning. This function is usually referred to as the <strong>Axis parallel hyper-ellipsoid function</strong>.</p>
+                title: "Axis Parallel Hyper-Ellipsoid",
+                body: `<p>A strictly convex, generalized formulation of the Sphere function with poor conditioning.</p>
                        <div class="formula-box">
                            $$f(\\mathbf{x}) = \\sum_{i=1}^{n} i \\cdot x_i^2$$
                        </div>
@@ -341,85 +361,11 @@
             if (window.MathJax) MathJax.typesetPromise([document.getElementById('infoModal')]).catch(err => console.log(err));
         }
 
-        function closeModal() {
-            document.getElementById('infoModal').style.display = "none";
-        }
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('infoModal')) closeModal();
-        }
+        function closeModal() { document.getElementById('infoModal').style.display = "none"; }
+        window.onclick = function(event) { if (event.target == document.getElementById('infoModal')) closeModal(); }
 
-        // --- Plotly Contour Logic ---
-        let currentLayout = {};
-        
-        function drawContourBackground() {
-            const func = functionSelect.value;
-            
-            // Skip contour drawing for custom functions
-            if (func === 'custom') {
-                return;
-            }
-            
-            const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
-            
-            const uIdx = parseInt(axisX.value) - 1; // JS is 0-indexed
-            const vIdx = parseInt(axisY.value) - 1;
-            
-            let x_range, y_range;
-            let x_vals = [], y_vals = [], z_vals = [];
-
-            if (func === 'rosenbrock') {
-                x_range = [-2.0, 2.0]; y_range = [-1.0, 3.0];
-            } else {
-                x_range = [-5.0, 5.0]; y_range = [-5.0, 5.0];
-            }
-
-            for (let i = x_range[0]; i <= x_range[1]; i += 0.05) x_vals.push(i);
-            for (let i = y_range[0]; i <= y_range[1]; i += 0.05) y_vals.push(i);
-
-            // Create a base optimal array to freeze non-plotted dimensions
-            let base_x = new Array(N).fill(0.0);
-            if (func === 'rosenbrock') base_x.fill(1.0);
-
-            for (let j = 0; j < y_vals.length; j++) {
-                let row = [];
-                for (let i = 0; i < x_vals.length; i++) {
-                    let temp_x = [...base_x];
-                    temp_x[uIdx] = x_vals[i];
-                    if (uIdx !== vIdx) temp_x[vIdx] = y_vals[j]; // Allow 1D slice plot
-
-                    let z = 0;
-                    if (func === 'rosenbrock') {
-                        for(let k=0; k<N-1; k++) z += 100*Math.pow(temp_x[k+1] - temp_x[k]*temp_x[k], 2) + Math.pow(1 - temp_x[k], 2);
-                    } else if (func === 'himmelblau') {
-                        let x = temp_x[0], y = temp_x[1];
-                        z = Math.pow(x*x + y - 11, 2) + Math.pow(x + y*y - 7, 2);
-                    } else if (func === 'sphere') {
-                        for(let k=0; k<N; k++) z += (k+1)*temp_x[k]*temp_x[k];
-                    }
-                    row.push(z);
-                }
-                z_vals.push(row);
-            }
-
-            currentLayout = {
-                title: `${functionSelect.options[functionSelect.selectedIndex].text} Slice (x${uIdx+1}, x${vIdx+1})`,
-                xaxis: { title: `x${uIdx+1}`, range: x_range },
-                yaxis: { title: `x${vIdx+1}`, range: y_range }
-            };
-            
-            const contourTrace = {
-                z: z_vals, x: x_vals, y: y_vals,
-                type: 'contour', colorscale: 'Viridis',
-                contours: { coloring: 'lines' }
-            };
-
-            Plotly.newPlot('plotDiv', [contourTrace], currentLayout);
-        }
-
-        // --- Helper: Convert Julia syntax to LaTeX ---
         function juliaToLatex(str) {
             let tex = str.replace(/x\[(\d+)\]/g, 'x_{$1}').replace(/\*/g, '\\cdot').replace(/\^/g, '^');
-            // Automatically add backslashes to common math functions for a beautiful LaTeX preview
             tex = tex.replace(/\b(sin|cos|tan|exp|log|ln|sqrt)\b/g, '\\$1');
             return `$$ f(\\mathbf{x}) = ${tex} $$`;
         }
@@ -433,14 +379,10 @@
             runOptimization();
         }
 
-        // Initialize
         updateDimensions();
 
-        // --- API Call Logic ---
         document.getElementById('runBtn').addEventListener('click', () => {
             const func = functionSelect.value;
-            
-            // If custom function, show preview modal
             if (func === 'custom') {
                 const formula = document.getElementById('customFormula').value;
                 if (!formula.trim()) {
@@ -451,7 +393,6 @@
                 document.getElementById('previewModal').style.display = 'block';
                 if (window.MathJax) MathJax.typesetPromise([document.getElementById('previewModal')]).catch(err => console.log(err));
             } else {
-                // For built-in functions, run immediately
                 runOptimization();
             }
         });
@@ -461,7 +402,6 @@
             const method = methodSelect.value;
             const ls = lsSelect.value;
             
-            // Build x0 array from dynamic inputs
             const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
             let x0_arr = [];
             for(let i=1; i<=N; i++) {
@@ -493,14 +433,12 @@
             
             const url = `http://127.0.0.1:8080/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
             
-            // Show loading indicator
             document.getElementById('loadingOverlay').classList.add('active');
             
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                // Hide loading indicator
                 document.getElementById('loadingOverlay').classList.remove('active');
                 
                 if (data.status === 'error') {
@@ -510,12 +448,35 @@
                 
                 if (data.status !== "success" && !data.diverged) return alert("Optimization failed.");
 
-                drawContourBackground();
+                // 1. Contour Trace
+                const contourTrace = {
+                    z: data.contour_z,
+                    x: data.contour_x,
+                    y: data.contour_y,
+                    type: 'contour',
+                    colorscale: 'YlGnBu',
+                    ncontours: 40,
+                    line: { 
+                        smoothing: 1.3, 
+                        color: 'rgba(0,0,0,0.3)',
+                        width: 0.8 
+                    },
+                    contours: { coloring: 'heatmap' },
+                    name: 'Contours'
+                };
 
-                const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
-                
-                // Create custom hover text for trajectory with iteration numbers
-                const iterationLabels = Array.from({length: data.iterations + 1}, (_, i) => `${i}`);
+                // 2. Dynamic Hover Text Builder
+                const hoverTexts = data.full_x_hist.map((pt, i) => {
+                    let txt = `<b>Iteration:</b> ${i}<br>`;
+                    const fval = data.f_hist[i];
+                    txt += `<b>f(x):</b> ${fval !== null ? fval.toExponential(4) : 'NaN'}<br>`;
+                    pt.forEach((val, dim) => {
+                        const vStr = val !== null ? val.toFixed(4) : 'NaN';
+                        txt += `<b>x<sub>${dim+1}</sub>:</b> ${vStr}<br>`;
+                    });
+                    return txt;
+                });
+
                 const trajectoryTrace = {
                     x: data.x_hist, 
                     y: data.y_hist, 
@@ -524,16 +485,27 @@
                     line: { color: 'red', width: 2.5 }, 
                     marker: { color: 'red', size: 5 }, 
                     name: methodLabel,
-                    text: iterationLabels,
-                    hovertemplate: 'Iteration: %{text}<br>x: %{x:.4f}<br>y: %{y:.4f}<extra></extra>'
+                    text: hoverTexts,
+                    hovertemplate: '%{text}<extra></extra>' // <extra></extra> hides the secondary box
                 };
-                Plotly.addTraces('plotDiv', trajectoryTrace);
 
-                // Update Results Panel
+                // 3. Layout (Gridlines above traces + Optional Equal Axes)
+                const layout = {
+                    title: `${functionSelect.options[functionSelect.selectedIndex].text} Slice (x${dim_x}, x${dim_y})`,
+                    xaxis: { title: `x${dim_x}`, layer: 'above traces' },
+                    yaxis: { title: `x${dim_y}`, layer: 'above traces' }
+                };
+
+                if (document.getElementById('equalAxesCb').checked) {
+                    layout.yaxis.scaleanchor = 'x';
+                    layout.yaxis.scaleratio = 1;
+                }
+
+                Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], layout);
+
                 document.getElementById('resultsPanel').classList.remove('hidden');
                 document.getElementById('iterCount').innerText = data.iterations;
 
-                // Handle Divergence Warning
                 const warnBox = document.getElementById('divergenceWarning');
                 const divDetails = document.getElementById('divergenceDetails');
                 if (data.diverged) {
@@ -548,20 +520,15 @@
                     warnBox.classList.add('hidden');
                 }
 
-                // Align step size graph with other graphs by prepending 0
-                // itArr = [0, 1, 2, ..., n], but alpha_hist only has n values (α for each step)
-                // Prepend 0 (no step before first iteration) to align axes
+                const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
                 const alphaArrAligned = [0, ...data.alpha_hist];
 
-                // Plot function value
                 Plotly.newPlot('fPlotDiv', [{ x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' }, name: 'f(x)' }], 
                     { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: 'log' } });
 
-                // Plot gradient norm
                 Plotly.newPlot('gradPlotDiv', [{ x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' }, name: '||∇f(x)||' }], 
                     { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: 'log' } });
 
-                // Plot step size
                 Plotly.newPlot('alphaPlotDiv', [{ x: itArr, y: alphaArrAligned, mode: 'lines+markers', type: 'scatter', line: { color: 'purple' }, name: 'α (step size)' }], 
                     { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'Step Size (α)', type: 'log' } });
                 
