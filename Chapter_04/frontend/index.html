@@ -13,8 +13,8 @@
         .results-panel { background: #e6f7ff; border: 1px solid #91d5ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .control-group { margin-bottom: 15px; }
         .hidden { display: none !important; }
-        select, input[type="number"], button { padding: 8px; font-size: 14px; margin-top: 5px; }
-        input[type="number"] { width: 60px; }
+        select, input[type="number"], button { padding: 8px; font-size: 14px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;}
+        input[type="number"] { width: 80px; }
         input[type="text"] { padding: 8px; font-size: 14px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
         
         button { cursor: pointer; background: #0078D7; color: white; border: none; border-radius: 5px; font-weight: bold; padding: 10px 20px; }
@@ -35,10 +35,11 @@
         .dim-box { background: #fff; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; line-height: 1.6;}
+        /* OPRAVENÝ ŘÁDEK: max-height a overflow-y zajišťují scrollování uvnitř modálního okna */
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; line-height: 1.6; max-height: 85vh; overflow-y: auto; }
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: black; }
-        .formula-box { background: #eee; padding: 15px; font-family: 'Courier New', monospace; border-left: 4px solid #0078D7; margin: 15px 0; border-radius: 4px; font-size: 15px; line-height: 1.8; }
+        .formula-box { background: #eee; padding: 15px; font-family: 'Courier New', monospace; border-left: 4px solid #0078D7; margin: 15px 0; border-radius: 4px; font-size: 15px; line-height: 1.8; overflow-x: auto; }
         
         .warning-box { color: #d9534f; background: #fdf015; padding: 15px; border-left: 4px solid #d9534f; font-weight: bold; border-radius: 4px; margin-top: 10px;}
         .divergence-details { background: #fff3cd; padding: 12px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 13px; line-height: 1.8;}
@@ -67,7 +68,7 @@
         <div class="flex-row">
             <div class="flex-col">
                 <label for="functionSelect"><strong>Test Function:</strong></label>
-                <button class="btn-info" onclick="showModal()">ⓘ Info / Formula</button><br>
+                <button class="btn-info" onclick="showInfoModal('function')">ⓘ Info / Formula</button><br>
                 <select id="functionSelect" style="width: 100%;">
                     <option value="rosenbrock">Rosenbrock (N-Dimensional)</option>
                     <option value="himmelblau">Himmelblau (2D Only)</option>
@@ -164,6 +165,36 @@
             </div>
         </div>
 
+        <hr>
+
+        <div class="flex-row">
+            <div class="flex-col">
+                <div class="control-group">
+                    <label for="termSelect"><strong>Primary Termination Criterion:</strong></label>
+                    <button class="btn-info" onclick="showInfoModal('termination')">ⓘ Details</button><br>
+                    <select id="termSelect" style="width: 100%;">
+                        <option value="gradient">Gradient Magnitude (||∇f|| &lt; ε)</option>
+                        <option value="step_size">Step Size Tolerance (||Δx|| &lt; ε)</option>
+                        <option value="f_abs">Absolute Improvement (|Δf| &lt; ε)</option>
+                        <option value="f_rel">Relative Improvement (|Δf| &lt; ε|f|)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex-col">
+                <div class="control-group" style="display: flex; gap: 15px;">
+                    <div>
+                        <label for="tolInput"><strong>Tolerance (ε):</strong></label><br>
+                        <input type="text" id="tolInput" value="1e-4" style="width: 100px;">
+                    </div>
+                    <div>
+                        <label for="maxIterInput"><strong>Max Iterations (k_max):</strong></label><br>
+                        <input type="number" id="maxIterInput" value="2000" min="10" step="100" style="width: 100px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <button id="runBtn" class="btn-run">Run Optimization</button>
     </div>
 
@@ -213,7 +244,7 @@
     <div id="infoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Function Details</h2>
+            <h2 id="modalTitle">Details</h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -291,8 +322,6 @@
         });
 
         function attachRelayoutListener() {
-            // Plotly.newPlot smaže všechny listenery, takže pokud graf existuje, 
-            // nejdřív případné staré listenery zničíme a navážeme čerstvý.
             if (plotDiv.removeAllListeners) {
                 plotDiv.removeAllListeners('plotly_relayout');
             }
@@ -339,8 +368,6 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 
-                // Namísto Plotly.update() upravujeme matici přímo v objektu
-                // a voláme Plotly.redraw(). Je to odolnější vůči rozbití vrstev grafu.
                 if (data.contour_z && plotDiv.data && plotDiv.data.length > 0) {
                     plotDiv.data[0].x = data.contour_x;
                     plotDiv.data[0].y = data.contour_y;
@@ -442,59 +469,84 @@
         document.getElementById('gradDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('gradPlotDiv'); });
         document.getElementById('alphaDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('alphaPlotDiv'); });
 
-        const functionData = {
-            rosenbrock: {
-                title: "Rosenbrock Function",
-                body: `<p>Also known as the Valley or Banana function, it is a popular test problem for gradient-based optimization algorithms.</p>
-                       <div class="formula-box">
-                           $$f(\\mathbf{x}) = \\sum_{i=1}^{n-1} \\left[ 100(x_{i+1} - x_i^2)^2 + (1 - x_i)^2 \\right]$$
-                       </div>
-                       <p><strong>Global Minimum:</strong> \\(f(\\mathbf{x}^*) = 0\\) at \\(\\mathbf{x}^* = (1, 1, \\ldots, 1)\\)</p>
-                       <p><strong>Characteristics:</strong> The global minimum lies inside a long, narrow, parabolic shaped flat valley. Finding the valley is trivial, but converging to the global minimum is difficult.</p>`
+        // --- Modals Dictionary ---
+        const modalContent = {
+            function: {
+                rosenbrock: {
+                    title: "Rosenbrock Function",
+                    body: `<p>Also known as the Valley or Banana function, it is a popular test problem for gradient-based optimization algorithms.</p>
+                           <div class="formula-box">
+                               $$f(\\mathbf{x}) = \\sum_{i=1}^{n-1} \\left[ 100(x_{i+1} - x_i^2)^2 + (1 - x_i)^2 \\right]$$
+                           </div>
+                           <p><strong>Global Minimum:</strong> \\(f(\\mathbf{x}^*) = 0\\) at \\(\\mathbf{x}^* = (1, 1, \\ldots, 1)\\)</p>
+                           <p><strong>Characteristics:</strong> The global minimum lies inside a long, narrow, parabolic shaped flat valley. Finding the valley is trivial, but converging to the global minimum is difficult.</p>`
+                },
+                himmelblau: {
+                    title: "Himmelblau's Function",
+                    body: `<p>A multi-modal test function used to evaluate optimization algorithms.</p>
+                           <div class="formula-box">
+                               $$f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2$$
+                           </div>
+                           <p><strong>Global Minima:</strong> Has four identical local minima where \\(f(\\mathbf{x}^*) = 0\\):</p>
+                           <ul>
+                               <li>\\((3.0, 2.0)\\)</li>
+                               <li>\\((-2.805, 3.131)\\)</li>
+                               <li>\\((-3.779, -3.283)\\)</li>
+                               <li>\\((3.584, -1.848)\\)</li>
+                           </ul>`
+                },
+                sphere: {
+                    title: "Axis Parallel Hyper-Ellipsoid",
+                    body: `<p>A strictly convex, generalized formulation of the Sphere function with poor conditioning.</p>
+                           <div class="formula-box">
+                               $$f(\\mathbf{x}) = \\sum_{i=1}^{n} i \\cdot x_i^2$$
+                           </div>
+                           <p><strong>Global Minimum:</strong> \\(f(\\mathbf{x}^*) = 0\\) at \\(\\mathbf{x}^* = (0, 0, \\ldots, 0)\\)</p>
+                           <p><strong>Characteristics:</strong> Because each dimension is scaled by its index \\(i\\), the level sets are hyperellipsoids rather than hyperspheres. This illustrates the "zig-zag" behavior of the Steepest Descent method.</p>`
+                },
+                custom: {
+                    title: "Custom Function Syntax Guide",
+                    body: `<p>Please use standard programming syntax for mathematical operations. The function is compiled and differentiated dynamically by Julia.</p>
+                           <ul>
+                               <li><strong>Variables:</strong> <code>x[1], x[2], x[3]...</code></li>
+                               <li><strong>Absolute value:</strong> <code>abs(x[1])</code> (DO NOT use |x|)</li>
+                               <li><strong>Square root:</strong> <code>sqrt(x[1])</code></li>
+                               <li><strong>Powers:</strong> <code>x[1]^2</code></li>
+                               <li><strong>Multiplication:</strong> Explicitly use <code>*</code> (e.g., <code>0.01 * x[1]^2</code>)</li>
+                               <li><strong>Trigonometry:</strong> <code>sin(), cos(), tan()</code></li>
+                               <li><strong>Logarithms:</strong> <code>log()</code> (natural), <code>log10()</code></li>
+                           </ul>`
+                }
             },
-            himmelblau: {
-                title: "Himmelblau's Function",
-                body: `<p>A multi-modal test function used to evaluate optimization algorithms.</p>
-                       <div class="formula-box">
-                           $$f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2$$
-                       </div>
-                       <p><strong>Global Minima:</strong> Has four identical local minima where \\(f(\\mathbf{x}^*) = 0\\):</p>
-                       <ul>
-                           <li>\\((3.0, 2.0)\\)</li>
-                           <li>\\((-2.805, 3.131)\\)</li>
-                           <li>\\((-3.779, -3.283)\\)</li>
-                           <li>\\((3.584, -1.848)\\)</li>
-                       </ul>`
-            },
-            sphere: {
-                title: "Axis Parallel Hyper-Ellipsoid",
-                body: `<p>A strictly convex, generalized formulation of the Sphere function with poor conditioning.</p>
-                       <div class="formula-box">
-                           $$f(\\mathbf{x}) = \\sum_{i=1}^{n} i \\cdot x_i^2$$
-                       </div>
-                       <p><strong>Global Minimum:</strong> \\(f(\\mathbf{x}^*) = 0\\) at \\(\\mathbf{x}^* = (0, 0, \\ldots, 0)\\)</p>
-                       <p><strong>Characteristics:</strong> Because each dimension is scaled by its index \\(i\\), the level sets are hyperellipsoids rather than hyperspheres. This illustrates the "zig-zag" behavior of the Steepest Descent method.</p>`
-            },
-            custom: {
-                title: "Custom Function Syntax Guide",
-                body: `<p>Please use standard programming syntax for mathematical operations. The function is compiled and differentiated dynamically by Julia.</p>
-                       <ul>
-                           <li><strong>Variables:</strong> <code>x[1], x[2], x[3]...</code></li>
-                           <li><strong>Absolute value:</strong> <code>abs(x[1])</code> (DO NOT use |x|)</li>
-                           <li><strong>Square root:</strong> <code>sqrt(x[1])</code></li>
-                           <li><strong>Powers:</strong> <code>x[1]^2</code></li>
-                           <li><strong>Multiplication:</strong> Explicitly use <code>*</code> (e.g., <code>0.01 * x[1]^2</code>)</li>
-                           <li><strong>Trigonometry:</strong> <code>sin(), cos(), tan()</code></li>
-                           <li><strong>Logarithms:</strong> <code>log()</code> (natural), <code>log10()</code></li>
+            termination: {
+                title: "Termination Criteria",
+                body: `<p>Optimization algorithms generally run indefinitely unless a stopping condition is met. You can select one of the following criteria to halt the algorithm when the specified tolerance \\(\\epsilon\\) is reached.</p>
+                       <ul style="line-height: 1.8;">
+                           <li><strong>Gradient Magnitude:</strong> Stops when the norm of the gradient is close to zero (indicating a stationary point).<br>
+                           <div class="formula-box" style="padding: 5px; margin: 5px 0;">$$||\\nabla f(x_k)|| < \\epsilon_g$$</div></li>
+                           <li><strong>Step Size Tolerance:</strong> Stops when the distance between consecutive iterations becomes negligible.<br>
+                           <div class="formula-box" style="padding: 5px; margin: 5px 0;">$$||x_{k+1} - x_k|| < \\epsilon_x$$</div></li>
+                           <li><strong>Absolute Improvement:</strong> Stops when the change in the function value over subsequent steps is extremely small.<br>
+                           <div class="formula-box" style="padding: 5px; margin: 5px 0;">$$|f(x_k) - f(x_{k+1})| < \\epsilon_a$$</div></li>
+                           <li><strong>Relative Improvement:</strong> Stops when the relative change in the function value is extremely small, useful for functions with very large magnitudes.<br>
+                           <div class="formula-box" style="padding: 5px; margin: 5px 0;">$$|f(x_k) - f(x_{k+1})| < \\epsilon_r |f(x_k)|$$</div></li>
+                           <li><strong>Maximum Iterations:</strong> The algorithm will always stop if the iteration count exceeds \\(k_{max}\\) as a safeguard against infinite loops.</li>
                        </ul>`
             }
         };
 
-        function showModal() {
-            const func = functionSelect.value;
-            if (!functionData[func]) return;
-            document.getElementById('modalTitle').innerText = functionData[func].title;
-            document.getElementById('modalBody').innerHTML = functionData[func].body;
+        function showInfoModal(type) {
+            let data = null;
+            if (type === 'function') {
+                const func = functionSelect.value;
+                data = modalContent.function[func];
+            } else if (type === 'termination') {
+                data = modalContent.termination;
+            }
+
+            if (!data) return;
+            document.getElementById('modalTitle').innerText = data.title;
+            document.getElementById('modalBody').innerHTML = data.body;
             document.getElementById('infoModal').style.display = "block";
             if (window.MathJax) MathJax.typesetPromise([document.getElementById('infoModal')]).catch(err => console.log(err));
         }
@@ -554,6 +606,11 @@
             const dim_x = axisX.value;
             const dim_y = axisY.value;
 
+            // Gather termination criteria
+            const termCriterion = document.getElementById('termSelect').value;
+            const tolVal = document.getElementById('tolInput').value;
+            const maxIterVal = document.getElementById('maxIterInput').value;
+
             let mValue = 5;
             if (method === 'lbfgs') {
                 const parsedM = Number(document.getElementById('mInput').value);
@@ -573,7 +630,7 @@
                 customFormula = document.getElementById('customFormula').value;
             }
             
-            const url = `http://127.0.0.1:8080/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
+            const url = `http://127.0.0.1:8080/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}&term_criterion=${termCriterion}&tol=${tolVal}&max_iter=${maxIterVal}`;
             
             document.getElementById('loadingOverlay').classList.add('active');
             
@@ -652,7 +709,7 @@
 
                     divDetails.innerHTML = `
                         <div><strong>Reason:</strong> ${data.divergence_reason}</div>
-                        <div><strong>Iteration:</strong> ${data.divergence_iteration}/2000</div>
+                        <div><strong>Iteration:</strong> ${data.divergence_iteration}/${maxIterVal}</div>
                         <div><strong>Final Gradient Norm:</strong> ||∇f(x)|| = ${gradStr}</div>
                         <div><strong>Final Function Value:</strong> f(x) = ${fStr}</div>
                     `;

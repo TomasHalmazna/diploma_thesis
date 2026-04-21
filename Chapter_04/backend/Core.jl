@@ -74,62 +74,73 @@ function check_divergence(x, g, f_val, alpha, iteration)
 end
 
 # --- GENERAL ITERATIVE SCHEMA ---
-function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimizer, linesearch::AbstractLineSearch; max_iter=1000, tol=1e-5)
+function run_optimization(f, ∇f, x0::Vector{Float64}, method::AbstractOptimizer, linesearch::AbstractLineSearch; 
+                          max_iter=2000, term_criterion="gradient", tol=1e-4)
     n = length(x0)
     
-    # Initialize the state
     x_init = copy(x0)
     g_init = ∇f(x_init)
     state = OptimizationState(x_init, g_init, Matrix{Float64}(I, n, n), [])
     
     history_pts = [copy(state.x)]
-    alpha_hist = Float64[]  # Track step sizes
+    alpha_hist = Float64[]  
     div_info = DivergenceInfo()
+    
+    f_curr = f(state.x)
 
     for iter in 1:max_iter
-        # Check convergence
         grad_norm = norm(state.gradient)
-        if grad_norm < tol
+        
+        # 1. Gradient Magnitude Termination Condition
+        if term_criterion == "gradient" && grad_norm < tol
             break
         end
         
-        # 1. Compute descent direction 
         d = compute_direction(method, state)
         
-        # Check if direction is valid
         if any(isnan.(d)) || any(isinf.(d))
-            div_info = DivergenceInfo(true, "Descent direction contains NaN or Inf", iter, grad_norm, f(state.x))
+            div_info = DivergenceInfo(true, "Descent direction contains NaN or Inf", iter, grad_norm, f_curr)
             break
         end
         
-        # 2. Perform line search
         alpha = compute_step_size(linesearch, f, ∇f, state, d)
-        push!(alpha_hist, alpha)  # Record step size
+        push!(alpha_hist, alpha)  
         
-        # 3. Update position and compute new gradient
         x_next = state.x + alpha * d
         g_next = ∇f(x_next)
         f_next = f(x_next)
         
-        # 4. Check for divergence
         div_check = check_divergence(x_next, g_next, f_next, alpha, iter)
         if div_check.diverged
             div_info = div_check
-            push!(history_pts, copy(x_next))  # Include last point before divergence
+            push!(history_pts, copy(x_next))  
             break
         end
         
-        # 5. Prepare displacement vectors
+        # Calculate differences for step and function value termination criteria
+        x_diff_norm = norm(x_next - state.x)
+        f_diff_abs = abs(f_curr - f_next)
+        
         s = x_next - state.x
         y = g_next - state.gradient
         
-        # Update internal approximation matrices (Multiple Dispatch)
         update_approximation!(method, state, s, y)
         
-        # 6. Overwrite state
+        # Overwrite state
         state.x = x_next
         state.gradient = g_next
         push!(history_pts, copy(state.x))
+        
+        # Post-step Termination Conditions
+        if term_criterion == "step_size" && x_diff_norm < tol
+            break
+        elseif term_criterion == "f_abs" && f_diff_abs < tol
+            break
+        elseif term_criterion == "f_rel" && f_diff_abs < tol * abs(f_curr)
+            break
+        end
+        
+        f_curr = f_next
     end
     
     return history_pts, alpha_hist, div_info

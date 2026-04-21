@@ -132,6 +132,11 @@ end
     dim_x = parse(Int, get(query, "dim_x", "1"))
     dim_y = parse(Int, get(query, "dim_y", "2"))
     
+    # NEW: Parsing Termination Criteria parameters
+    term_criterion = get(query, "term_criterion", "gradient")
+    tol = parse(Float64, get(query, "tol", "1e-4"))
+    max_iter = parse(Int, get(query, "max_iter", "2000"))
+    
     f_obj, ∇f_obj, Hf_obj = nothing, nothing, nothing
     if selected_function == "custom"
         f_obj, ∇f_obj, Hf_obj, err = create_custom_function(custom_formula, x0)
@@ -171,7 +176,9 @@ end
     end
     
     try
-        history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; max_iter=2000, tol=1e-4)
+        # PASSING NEW PARAMS TO THE CORE
+        history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; 
+                                                         max_iter=max_iter, term_criterion=term_criterion, tol=tol)
         
         dim_x = clamp(dim_x, 1, length(x0))
         dim_y = clamp(dim_y, 1, length(x0))
@@ -211,7 +218,6 @@ end
         x_grid = range(plot_xmin, stop=plot_xmax, length=RESOLUTION)
         y_grid = range(plot_ymin, stop=plot_ymax, length=RESOLUTION)
         
-        # CRITICAL FIX: Using Array of Arrays for proper JSON serialization
         z_grid = Vector{Vector{Union{Float64, Nothing}}}(undef, RESOLUTION)
         for j in 1:RESOLUTION
             z_grid[j] = Vector{Union{Float64, Nothing}}(undef, RESOLUTION)
