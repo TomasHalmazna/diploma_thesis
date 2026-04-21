@@ -79,7 +79,14 @@
                     <option value="rosenbrock">Rosenbrock (N-Dimensional)</option>
                     <option value="himmelblau">Himmelblau (2D Only)</option>
                     <option value="sphere">Elliptical Bowl (N-Dimensional)</option>
+                    <option value="custom">Custom (User Defined)</option>
                 </select>
+                
+                <div id="customGroup" class="hidden" style="margin-top: 10px;">
+                    <label><strong>Formula (Julia/AD):</strong></label>
+                    <input type="text" id="customFormula" style="width: 100%;" placeholder="e.g. x[1]^2 + sin(x[2])">
+                    <small style="color: #666;">Use x[1], x[2], etc. Derivatives are exact (Automatic Differentiation).</small>
+                </div>
                 
                 <div id="dimensionGroup" style="margin-top: 15px;">
                     <label for="dimInput"><strong>Dimensions (N):</strong></label>
@@ -186,6 +193,15 @@
     
     <div id="plotDiv"></div>
 
+    <div id="previewModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <h3>Confirm Formula</h3>
+            <div id="latexPreview" class="formula-box"></div>
+            <button onclick="closePreview()" style="margin-right: 10px;">Edit Formula</button>
+            <button onclick="startOptimization()" style="background: #28a745;">Approve & Run</button>
+        </div>
+    </div>
+
     <div id="infoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -209,8 +225,13 @@
             if (func === 'himmelblau') {
                 document.getElementById('dimensionGroup').classList.add('hidden');
                 N = 2; // Himmelblau is strictly 2D
+            } else if (func === 'custom') {
+                document.getElementById('dimensionGroup').classList.remove('hidden');
+                document.getElementById('customGroup').classList.remove('hidden');
+                N = parseInt(dimInput.value);
             } else {
                 document.getElementById('dimensionGroup').classList.remove('hidden');
+                document.getElementById('customGroup').classList.add('hidden');
             }
 
             // Generate x0 inputs
@@ -310,6 +331,10 @@
 
         function showModal() {
             const func = functionSelect.value;
+            if (!functionData[func]) {
+                alert("No information available for this function.");
+                return;
+            }
             document.getElementById('modalTitle').innerText = functionData[func].title;
             document.getElementById('modalBody').innerHTML = functionData[func].body;
             document.getElementById('infoModal').style.display = "block";
@@ -328,6 +353,12 @@
         
         function drawContourBackground() {
             const func = functionSelect.value;
+            
+            // Skip contour drawing for custom functions
+            if (func === 'custom') {
+                return;
+            }
+            
             const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
             
             const uIdx = parseInt(axisX.value) - 1; // JS is 0-indexed
@@ -385,11 +416,47 @@
             Plotly.newPlot('plotDiv', [contourTrace], currentLayout);
         }
 
+        // --- Helper: Convert Julia syntax to LaTeX ---
+        function juliaToLatex(str) {
+            let tex = str.replace(/x\[(\d+)\]/g, 'x_{$1}').replace(/\*/g, '\\cdot').replace(/\^/g, '^');
+            // Automatically add backslashes to common math functions for a beautiful LaTeX preview
+            tex = tex.replace(/\b(sin|cos|tan|exp|log|ln|sqrt)\b/g, '\\$1');
+            return `$$ f(\\mathbf{x}) = ${tex} $$`;
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        async function startOptimization() {
+            closePreview();
+            runOptimization();
+        }
+
         // Initialize
         updateDimensions();
 
         // --- API Call Logic ---
-        document.getElementById('runBtn').addEventListener('click', async () => {
+        document.getElementById('runBtn').addEventListener('click', () => {
+            const func = functionSelect.value;
+            
+            // If custom function, show preview modal
+            if (func === 'custom') {
+                const formula = document.getElementById('customFormula').value;
+                if (!formula.trim()) {
+                    alert("Please enter a formula for the custom function.");
+                    return;
+                }
+                document.getElementById('latexPreview').innerHTML = juliaToLatex(formula);
+                document.getElementById('previewModal').style.display = 'block';
+                if (window.MathJax) MathJax.typesetPromise([document.getElementById('previewModal')]).catch(err => console.log(err));
+            } else {
+                // For built-in functions, run immediately
+                runOptimization();
+            }
+        });
+
+        async function runOptimization() {
             const func = functionSelect.value;
             const method = methodSelect.value;
             const ls = lsSelect.value;
@@ -419,7 +486,12 @@
             if (method === 'cg') methodLabel = document.getElementById('cgVariantSelect').options[document.getElementById('cgVariantSelect').selectedIndex].text;
             else if (method === 'lbfgs') methodLabel = `L-BFGS (m=${mValue})`;
             
-            const url = `http://127.0.0.1:8080/optimize?function=${func}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
+            let customFormula = '';
+            if (func === 'custom') {
+                customFormula = document.getElementById('customFormula').value;
+            }
+            
+            const url = `http://127.0.0.1:8080/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_str}&dim_x=${dim_x}&dim_y=${dim_y}`;
             
             // Show loading indicator
             document.getElementById('loadingOverlay').classList.add('active');
@@ -430,6 +502,11 @@
                 
                 // Hide loading indicator
                 document.getElementById('loadingOverlay').classList.remove('active');
+                
+                if (data.status === 'error') {
+                    alert("Error: " + data.message);
+                    return;
+                }
                 
                 if (data.status !== "success" && !data.diverged) return alert("Optimization failed.");
 
@@ -492,7 +569,7 @@
                 document.getElementById('loadingOverlay').classList.remove('active');
                 alert("Backend error: " + error.message);
             }
-        });
+        }
     </script>
 </body>
 </html>
