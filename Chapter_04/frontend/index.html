@@ -23,36 +23,30 @@
         .btn-info { background: #28a745; margin-left: 10px; font-size: 12px; padding: 5px 10px; }
         .btn-info:hover { background: #218838; }
 
-        #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 20px; }
+        #plotDiv { width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 20px; background: #fff;}
         hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
-        
         details { margin-top: 15px; background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         summary { font-weight: bold; cursor: pointer; outline: none; padding: 5px 0; }
         .mini-plot { width: 100%; height: 350px; margin-top: 10px; }
         
         .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .flex-col { flex: 1; min-width: 250px;}
-
         .dim-inputs { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;}
         .dim-box { background: #fff; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; }
 
-        /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; line-height: 1.6;}
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: black; }
         .formula-box { background: #eee; padding: 15px; font-family: 'Courier New', monospace; border-left: 4px solid #0078D7; margin: 15px 0; border-radius: 4px; font-size: 15px; line-height: 1.8; }
-        .formula-box .math { display: block; margin: 10px 0; }
         
-        /* Warning Styles */
         .warning-box { color: #d9534f; background: #fdf015; padding: 15px; border-left: 4px solid #d9534f; font-weight: bold; border-radius: 4px; margin-top: 10px;}
         .divergence-details { background: #fff3cd; padding: 12px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 13px; line-height: 1.8;}
         .divergence-details strong { color: #000; font-weight: bold; }
 
-        /* Loading Indicator */
         .loading-overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.3); }
-        .loading-overlay.active { display: flex; }
-        .loading-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .loading-overlay.active { display: flex; align-items: center; justify-content: center; }
+        .loading-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #0078D7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { font-size: 16px; color: #333; font-weight: bold; }
@@ -65,12 +59,11 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-container">
             <div class="spinner"></div>
-            <div class="loading-text">Optimizing... Please wait</div>
+            <div class="loading-text" id="loadingText">Optimizing... Please wait</div>
         </div>
     </div>
     
     <div class="panel">
-        
         <div class="flex-row">
             <div class="flex-col">
                 <label for="functionSelect"><strong>Test Function:</strong></label>
@@ -97,16 +90,15 @@
             <div class="flex-col">
                 <label><strong>Starting Point (x₀):</strong></label>
                 <small style="display: block; color: #d9534f; margin-bottom: 5px;">⚠ Ensure x₀ is within the function's domain (e.g., &gt; 0 for log).</small>
-                <div id="x0Inputs" class="dim-inputs">
-                </div>
+                <div id="x0Inputs" class="dim-inputs"></div>
 
                 <div id="plotAxesGroup" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
                     <label><strong>2D Plot Slice (Axes):</strong></label><br>
                     <div style="display: inline-block; margin-right: 15px;">
-                        X-Axis: <select id="axisX" style="width: 60px;"></select>
+                        X-Axis: <select id="axisX"></select>
                     </div>
                     <div style="display: inline-block;">
-                        Y-Axis: <select id="axisY" style="width: 60px;"></select>
+                        Y-Axis: <select id="axisY"></select>
                     </div>
                     <br>
                     <label style="margin-top: 10px; display: inline-block;">
@@ -125,7 +117,7 @@
                     <select id="methodSelect" style="width: 100%;">
                         <option value="sd">Steepest Descent</option>
                         <option value="cg">Conjugate Gradient</option>
-                        <option value="newton">Newton's Method (Exact)</option>
+                        <option value="newton">Newton's Method (Damped)</option>
                         <option value="dfp">DFP (Quasi-Newton)</option>
                         <option value="bfgs">BFGS (Quasi-Newton)</option>
                         <option value="lbfgs">L-BFGS (Limited Memory)</option>
@@ -184,17 +176,21 @@
             <div id="divergenceDetails" class="divergence-details"></div>
         </div>
         
-        <details id="fDetails">
+        <label style="display: block; margin-top: 15px; margin-bottom: 10px; font-weight: bold;">
+            <input type="checkbox" id="logScaleCb" checked> Use Logarithmic Y-Axis for Evolution Plots
+        </label>
+
+        <details id="fDetails" open>
             <summary>► Show Function Value Evolution</summary>
             <div id="fPlotDiv" class="mini-plot"></div>
         </details>
 
-        <details id="gradDetails">
+        <details id="gradDetails" open>
             <summary>► Show Gradient Norm Evolution</summary>
             <div id="gradPlotDiv" class="mini-plot"></div>
         </details>
 
-        <details id="alphaDetails">
+        <details id="alphaDetails" open>
             <summary>► Show Step Size Evolution</summary>
             <div id="alphaPlotDiv" class="mini-plot"></div>
         </details>
@@ -204,10 +200,13 @@
 
     <div id="previewModal" class="modal">
         <div class="modal-content" style="text-align: center;">
-            <h3>Confirm Formula</h3>
-            <div id="latexPreview" class="formula-box"></div>
-            <button onclick="closePreview()" style="margin-right: 10px;">Edit Formula</button>
-            <button onclick="startOptimization()" style="background: #28a745;">Approve & Run</button>
+            <h3>Confirm Function Definition</h3>
+            <p>The following function will be processed using automatic differentiation:</p>
+            <div id="latexPreview" class="formula-box" style="font-size: 20px;"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <button onclick="closePreview()" style="background: #666;">Edit Formula</button>
+                <button onclick="startOptimization()" style="background: #28a745;">Approve & Run</button>
+            </div>
         </div>
     </div>
 
@@ -225,8 +224,13 @@
         const x0Inputs = document.getElementById('x0Inputs');
         const axisX = document.getElementById('axisX');
         const axisY = document.getElementById('axisY');
-        
-        // --- Dynamic Dimension Logic ---
+        const plotDiv = document.getElementById('plotDiv');
+        let debounceTimer;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDimensions();
+        });
+
         function updateDimensions() {
             const func = functionSelect.value;
             let N = parseInt(dimInput.value);
@@ -234,7 +238,7 @@
             if (func === 'himmelblau') {
                 document.getElementById('dimensionGroup').classList.add('hidden');
                 document.getElementById('customGroup').classList.add('hidden');
-                N = 2; // Himmelblau is strictly 2D
+                N = 2;
             } else if (func === 'custom') {
                 document.getElementById('dimensionGroup').classList.remove('hidden');
                 document.getElementById('customGroup').classList.remove('hidden');
@@ -244,7 +248,6 @@
                 document.getElementById('customGroup').classList.add('hidden');
             }
 
-            // Generate x0 inputs
             x0Inputs.innerHTML = '';
             axisX.innerHTML = '';
             axisY.innerHTML = '';
@@ -257,16 +260,23 @@
                 if (func === 'sphere') { val = (i % 2 === 0) ? 3.0 : -4.0; } 
 
                 x0Inputs.innerHTML += `<div class="dim-box">x<sub>${i}</sub>: <input type="number" id="x0_${i}" value="${val}" step="0.5"></div>`;
-                
                 axisX.innerHTML += `<option value="${i}">x${i}</option>`;
                 axisY.innerHTML += `<option value="${i}" ${i === 2 ? 'selected' : ''}>x${i}</option>`;
             }
+
+            drawInitialPlot();
         }
 
         dimInput.addEventListener('change', updateDimensions);
         functionSelect.addEventListener('change', updateDimensions);
 
-        // --- Equal Axes Real-time Update ---
+        document.getElementById('logScaleCb').addEventListener('change', function() {
+            const type = this.checked ? 'log' : 'linear';
+            if (document.getElementById('fPlotDiv').data) Plotly.relayout('fPlotDiv', {'yaxis.type': type});
+            if (document.getElementById('gradPlotDiv').data) Plotly.relayout('gradPlotDiv', {'yaxis.type': type});
+            if (document.getElementById('alphaPlotDiv').data) Plotly.relayout('alphaPlotDiv', {'yaxis.type': type});
+        });
+
         document.getElementById('equalAxesCb').addEventListener('change', function() {
             const update = {};
             if (this.checked) {
@@ -275,13 +285,132 @@
             } else {
                 update['yaxis.scaleanchor'] = null;
             }
-            // Only update layout if plot exists
-            if (document.getElementById('plotDiv').data) {
-                Plotly.relayout('plotDiv', update);
+            if (plotDiv.data) {
+                Plotly.relayout(plotDiv, update);
             }
         });
 
-        // --- Rest of UI Logic ---
+        function attachRelayoutListener() {
+            // Plotly.newPlot smaže všechny listenery, takže pokud graf existuje, 
+            // nejdřív případné staré listenery zničíme a navážeme čerstvý.
+            if (plotDiv.removeAllListeners) {
+                plotDiv.removeAllListeners('plotly_relayout');
+            }
+
+            plotDiv.on('plotly_relayout', function(eventdata) {
+                if (!eventdata['xaxis.range[0]'] && !eventdata['xaxis.range'] && !eventdata['xaxis.autorange'] &&
+                    !eventdata['yaxis.range[0]'] && !eventdata['yaxis.range'] && !eventdata['yaxis.autorange']) {
+                    return; 
+                }
+
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    try {
+                        const xmin = plotDiv.layout.xaxis.range[0];
+                        const xmax = plotDiv.layout.xaxis.range[1];
+                        const ymin = plotDiv.layout.yaxis.range[0];
+                        const ymax = plotDiv.layout.yaxis.range[1];
+
+                        fetchNewContours(xmin, xmax, ymin, ymax);
+                    } catch(e) {
+                        console.warn("Could not read ranges for contour update.");
+                    }
+                }, 400); 
+            });
+        }
+
+        async function fetchNewContours(xmin, xmax, ymin, ymax) {
+            document.getElementById('loadingText').innerText = "Recalculating View...";
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            const func = functionSelect.value;
+            const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
+            let x0_arr = [];
+            for(let i=1; i<=N; i++) {
+                const el = document.getElementById(`x0_${i}`);
+                x0_arr.push(el ? el.value : "0.0");
+            }
+            const x0_str = x0_arr.join(",");
+            const customFormula = func === 'custom' ? document.getElementById('customFormula').value : "";
+
+            const url = `http://127.0.0.1:8080/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                // Namísto Plotly.update() upravujeme matici přímo v objektu
+                // a voláme Plotly.redraw(). Je to odolnější vůči rozbití vrstev grafu.
+                if (data.contour_z && plotDiv.data && plotDiv.data.length > 0) {
+                    plotDiv.data[0].x = data.contour_x;
+                    plotDiv.data[0].y = data.contour_y;
+                    plotDiv.data[0].z = data.contour_z;
+                    Plotly.redraw(plotDiv);
+                }
+            } catch (error) {
+                console.error("Failed to fetch new contours:", error);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+                document.getElementById('loadingText').innerText = "Optimizing... Please wait";
+            }
+        }
+
+        async function drawInitialPlot() {
+            const func = functionSelect.value;
+            if (func === 'custom' && !document.getElementById('customFormula').value.trim()) {
+                Plotly.newPlot('plotDiv', [], {title: "Awaiting custom formula..."});
+                return;
+            }
+
+            let xmin = -5, xmax = 5, ymin = -5, ymax = 5;
+            if (func === 'rosenbrock') { xmin = -2; xmax = 2; ymin = -1; ymax = 3; }
+
+            const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
+            let x0_arr = [];
+            for(let i=1; i<=N; i++) {
+                const el = document.getElementById(`x0_${i}`);
+                x0_arr.push(el ? el.value : "0.0");
+            }
+            const x0_str = x0_arr.join(",");
+            const customFormula = func === 'custom' ? document.getElementById('customFormula').value : "";
+
+            const url = `http://127.0.0.1:8080/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if(data.error || !data.contour_z) {
+                    Plotly.newPlot('plotDiv', [], {title: "Function definition invalid or incomplete."});
+                    return;
+                }
+
+                const contourTrace = {
+                    z: data.contour_z,
+                    x: data.contour_x,
+                    y: data.contour_y,
+                    type: 'contour',
+                    colorscale: 'YlGnBu',
+                    ncontours: 40,
+                    line: { smoothing: 1.3, color: 'rgba(0,0,0,0.3)', width: 0.8 },
+                    contours: { coloring: 'heatmap' },
+                    name: 'Contours'
+                };
+
+                const layout = {
+                    title: `${functionSelect.options[functionSelect.selectedIndex].text} Slice (x${axisX.value}, x${axisY.value})`,
+                    xaxis: { title: `x${axisX.value}`, range: [xmin, xmax] },
+                    yaxis: { title: `x${axisY.value}`, range: [ymin, ymax] }
+                };
+
+                Plotly.newPlot('plotDiv', [contourTrace], layout);
+                attachRelayoutListener();
+
+            } catch(e) {
+                console.error("Failed to load initial plot", e);
+            }
+        }
+
         const methodSelect = document.getElementById('methodSelect');
         const cgVariantGroup = document.getElementById('cgVariantGroup');
         const lbfgsOptionsGroup = document.getElementById('lbfgsOptionsGroup');
@@ -313,7 +442,6 @@
         document.getElementById('gradDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('gradPlotDiv'); });
         document.getElementById('alphaDetails').addEventListener('toggle', function() { if(this.open) Plotly.Plots.resize('alphaPlotDiv'); });
 
-        // --- Modal Logic ---
         const functionData = {
             rosenbrock: {
                 title: "Rosenbrock Function",
@@ -346,15 +474,25 @@
                        </div>
                        <p><strong>Global Minimum:</strong> \\(f(\\mathbf{x}^*) = 0\\) at \\(\\mathbf{x}^* = (0, 0, \\ldots, 0)\\)</p>
                        <p><strong>Characteristics:</strong> Because each dimension is scaled by its index \\(i\\), the level sets are hyperellipsoids rather than hyperspheres. This illustrates the "zig-zag" behavior of the Steepest Descent method.</p>`
+            },
+            custom: {
+                title: "Custom Function Syntax Guide",
+                body: `<p>Please use standard programming syntax for mathematical operations. The function is compiled and differentiated dynamically by Julia.</p>
+                       <ul>
+                           <li><strong>Variables:</strong> <code>x[1], x[2], x[3]...</code></li>
+                           <li><strong>Absolute value:</strong> <code>abs(x[1])</code> (DO NOT use |x|)</li>
+                           <li><strong>Square root:</strong> <code>sqrt(x[1])</code></li>
+                           <li><strong>Powers:</strong> <code>x[1]^2</code></li>
+                           <li><strong>Multiplication:</strong> Explicitly use <code>*</code> (e.g., <code>0.01 * x[1]^2</code>)</li>
+                           <li><strong>Trigonometry:</strong> <code>sin(), cos(), tan()</code></li>
+                           <li><strong>Logarithms:</strong> <code>log()</code> (natural), <code>log10()</code></li>
+                       </ul>`
             }
         };
 
         function showModal() {
             const func = functionSelect.value;
-            if (!functionData[func]) {
-                alert("No information available for this function.");
-                return;
-            }
+            if (!functionData[func]) return;
             document.getElementById('modalTitle').innerText = functionData[func].title;
             document.getElementById('modalBody').innerHTML = functionData[func].body;
             document.getElementById('infoModal').style.display = "block";
@@ -366,6 +504,7 @@
 
         function juliaToLatex(str) {
             let tex = str.replace(/x\[(\d+)\]/g, 'x_{$1}').replace(/\*/g, '\\cdot').replace(/\^/g, '^');
+            tex = tex.replace(/abs\(([^)]+)\)/g, '|$1|');
             tex = tex.replace(/\b(sin|cos|tan|exp|log|ln|sqrt)\b/g, '\\$1');
             return `$$ f(\\mathbf{x}) = ${tex} $$`;
         }
@@ -373,13 +512,6 @@
         function closePreview() {
             document.getElementById('previewModal').style.display = 'none';
         }
-
-        async function startOptimization() {
-            closePreview();
-            runOptimization();
-        }
-
-        updateDimensions();
 
         document.getElementById('runBtn').addEventListener('click', () => {
             const func = functionSelect.value;
@@ -397,6 +529,11 @@
             }
         });
 
+        async function startOptimization() {
+            closePreview();
+            runOptimization();
+        }
+
         async function runOptimization() {
             const func = functionSelect.value;
             const method = methodSelect.value;
@@ -405,7 +542,12 @@
             const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
             let x0_arr = [];
             for(let i=1; i<=N; i++) {
-                x0_arr.push(document.getElementById(`x0_${i}`).value);
+                const el = document.getElementById(`x0_${i}`);
+                if (!el) {
+                    alert("Starting points not fully initialized. Please wait a second.");
+                    return;
+                }
+                x0_arr.push(el.value);
             }
             const x0_str = x0_arr.join(",");
             
@@ -448,7 +590,6 @@
                 
                 if (data.status !== "success" && !data.diverged) return alert("Optimization failed.");
 
-                // 1. Contour Trace
                 const contourTrace = {
                     z: data.contour_z,
                     x: data.contour_x,
@@ -456,16 +597,11 @@
                     type: 'contour',
                     colorscale: 'YlGnBu',
                     ncontours: 40,
-                    line: { 
-                        smoothing: 1.3, 
-                        color: 'rgba(0,0,0,0.3)',
-                        width: 0.8 
-                    },
+                    line: { smoothing: 1.3, color: 'rgba(0,0,0,0.3)', width: 0.8 },
                     contours: { coloring: 'heatmap' },
                     name: 'Contours'
                 };
 
-                // 2. Dynamic Hover Text Builder
                 const hoverTexts = data.full_x_hist.map((pt, i) => {
                     let txt = `<b>Iteration:</b> ${i}<br>`;
                     const fval = data.f_hist[i];
@@ -486,10 +622,9 @@
                     marker: { color: 'red', size: 5 }, 
                     name: methodLabel,
                     text: hoverTexts,
-                    hovertemplate: '%{text}<extra></extra>' // <extra></extra> hides the secondary box
+                    hovertemplate: '%{text}<extra></extra>' 
                 };
 
-                // 3. Layout (Gridlines above traces + Optional Equal Axes)
                 const layout = {
                     title: `${functionSelect.options[functionSelect.selectedIndex].text} Slice (x${dim_x}, x${dim_y})`,
                     xaxis: { title: `x${dim_x}`, layer: 'above traces' },
@@ -502,6 +637,7 @@
                 }
 
                 Plotly.newPlot('plotDiv', [contourTrace, trajectoryTrace], layout);
+                attachRelayoutListener();
 
                 document.getElementById('resultsPanel').classList.remove('hidden');
                 document.getElementById('iterCount').innerText = data.iterations;
@@ -510,27 +646,32 @@
                 const divDetails = document.getElementById('divergenceDetails');
                 if (data.diverged) {
                     warnBox.classList.remove('hidden');
+                    
+                    const gradStr = data.final_grad_norm !== null ? data.final_grad_norm.toExponential(3) : 'NaN';
+                    const fStr = data.final_f_value !== null ? data.final_f_value.toExponential(3) : 'NaN';
+
                     divDetails.innerHTML = `
                         <div><strong>Reason:</strong> ${data.divergence_reason}</div>
                         <div><strong>Iteration:</strong> ${data.divergence_iteration}/2000</div>
-                        <div><strong>Final Gradient Norm:</strong> ||∇f(x)|| = ${data.final_grad_norm.toExponential(3)}</div>
-                        <div><strong>Final Function Value:</strong> f(x) = ${data.final_f_value.toExponential(3)}</div>
+                        <div><strong>Final Gradient Norm:</strong> ||∇f(x)|| = ${gradStr}</div>
+                        <div><strong>Final Function Value:</strong> f(x) = ${fStr}</div>
                     `;
                 } else {
                     warnBox.classList.add('hidden');
                 }
 
                 const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
-                const alphaArrAligned = [0, ...data.alpha_hist];
+                const alphaArrAligned = [0, ...data.alpha_hist]; 
+                const logType = document.getElementById('logScaleCb').checked ? 'log' : 'linear';
 
                 Plotly.newPlot('fPlotDiv', [{ x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' }, name: 'f(x)' }], 
-                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: 'log' } });
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'f(x)', type: logType } });
 
                 Plotly.newPlot('gradPlotDiv', [{ x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' }, name: '||∇f(x)||' }], 
-                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: 'log' } });
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: '||∇f(x)||', type: logType } });
 
                 Plotly.newPlot('alphaPlotDiv', [{ x: itArr, y: alphaArrAligned, mode: 'lines+markers', type: 'scatter', line: { color: 'purple' }, name: 'α (step size)' }], 
-                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'Step Size (α)', type: 'log' } });
+                    { margin: { t: 20, b: 40, l: 50, r: 20 }, xaxis: { title: 'Iteration (k)' }, yaxis: { title: 'Step Size (α)', type: logType } });
                 
             } catch (error) {
                 document.getElementById('loadingOverlay').classList.remove('active');
