@@ -163,24 +163,33 @@
             <div id="divergenceDetails" class="divergence-details"></div>
         </div>
         
-        <label style="display: block; margin-top: 15px; margin-bottom: 10px; font-weight: bold;">
+        <label style="display: block; margin-top: 15px; font-weight: bold;">
             <input type="checkbox" id="logScaleCb" checked> Use Logarithmic Y-Axis for Evolution Plots
         </label>
+        <small style="color: #666; margin-bottom: 10px; display: block;">Tip: Click the 🔍 icon on any plot to enlarge it.</small>
 
-        <details id="fDetails" open>
-            <summary>► Show Function Value Evolution</summary>
-            <div id="fPlotDiv" class="mini-plot"></div>
-        </details>
-
-        <details id="gradDetails" open>
-            <summary>► Show Gradient Norm Evolution</summary>
-            <div id="gradPlotDiv" class="mini-plot"></div>
-        </details>
-
-        <details id="alphaDetails" open>
-            <summary>► Show Step Size Evolution</summary>
-            <div id="alphaPlotDiv" class="mini-plot"></div>
-        </details>
+        <div class="plots-grid">
+            <div class="plot-card">
+                <span class="enlarge-icon" onclick="enlargePlot('fPlotDiv', 'Function Value Evolution')">🔍</span>
+                <h4><i>f(x<sub>k</sub>)</i></h4>
+                <div id="fPlotDiv" class="mini-plot"></div>
+            </div>
+            <div class="plot-card">
+                <span class="enlarge-icon" onclick="enlargePlot('gradPlotDiv', 'Gradient Norm Evolution')">🔍</span>
+                <h4>||∇<i>f(x<sub>k</sub>)</i>||</h4>
+                <div id="gradPlotDiv" class="mini-plot"></div>
+            </div>
+            <div class="plot-card">
+                <span class="enlarge-icon" onclick="enlargePlot('alphaPlotDiv', 'Step Size Evolution')">🔍</span>
+                <h4><i>α<sub>k</sub></i></h4>
+                <div id="alphaPlotDiv" class="mini-plot"></div>
+            </div>
+            <div class="plot-card">
+                <span class="enlarge-icon" onclick="enlargePlot('distPlotDiv', 'Step Distance Evolution')">🔍</span>
+                <h4>||<i>x<sub>k+1</sub> - x<sub>k</sub></i>||</h4>
+                <div id="distPlotDiv" class="mini-plot"></div>
+            </div>
+        </div>
     </div>
     
     <div id="plotDiv"></div>
@@ -188,12 +197,19 @@
     <div id="previewModal" class="modal">
         <div class="modal-content" style="text-align: center;">
             <h3>Confirm Function Definition</h3>
-            <p>The following function will be processed using automatic differentiation:</p>
             <div id="latexPreview" class="formula-box" style="font-size: 20px;"></div>
             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
                 <button onclick="closePreview()" style="background: #666;">Edit Formula</button>
                 <button onclick="startOptimization()" style="background: #28a745;">Approve & Run</button>
             </div>
+        </div>
+    </div>
+
+    <div id="plotEnlargeModal" class="modal">
+        <div class="plot-modal-content">
+            <span class="close" onclick="closePlotModal()">&times;</span>
+            <h2 id="plotEnlargeTitle" style="margin-top: 0; text-align: center;">Plot</h2>
+            <div id="enlargedPlotDiv" style="flex: 1; width: 100%; height: 100%;"></div>
         </div>
     </div>
 

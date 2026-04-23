@@ -1,13 +1,9 @@
 # backend/server.jl
-using Pkg
-Pkg.activate(@__DIR__) # Activates the environment in the current directory (where this server.jl is located)
-Pkg.instantiate()      # Checks the Manifest and downloads the exactly the same versions of packages
-
-
 using Oxygen
 using HTTP
 using LinearAlgebra
 using ForwardDiff
+using Optim # Pro získání referenčního "Ground Truth" minima
 
 # 1. Loading core and mathematical functions
 include("Core.jl")
@@ -81,7 +77,6 @@ end
     x_grid = range(xmin, stop=xmax, length=RESOLUTION)
     y_grid = range(ymin, stop=ymax, length=RESOLUTION)
     
-    # CRITICAL FIX: Using Array of Arrays instead of Matrix for proper JSON 2D serialization
     z_grid = Vector{Vector{Union{Float64, Nothing}}}(undef, RESOLUTION)
     for j in 1:RESOLUTION
         z_grid[j] = Vector{Union{Float64, Nothing}}(undef, RESOLUTION)
@@ -132,7 +127,6 @@ end
     dim_x = parse(Int, get(query, "dim_x", "1"))
     dim_y = parse(Int, get(query, "dim_y", "2"))
     
-    # NEW: Parsing Termination Criteria parameters
     term_criterion = get(query, "term_criterion", "gradient")
     tol = parse(Float64, get(query, "tol", "1e-4"))
     max_iter = parse(Int, get(query, "max_iter", "2000"))
@@ -176,7 +170,6 @@ end
     end
     
     try
-        # PASSING NEW PARAMS TO THE CORE
         history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; 
                                                          max_iter=max_iter, term_criterion=term_criterion, tol=tol)
         
@@ -192,6 +185,27 @@ end
         grad_norm_hist = [clean_val(norm(∇f_obj(pt))) for pt in history]
         alpha_hist_clean = [clean_val(v) for v in alpha_hist]
         
+        step_distances = Float64[]
+        for i in 1:(length(history)-1)
+            push!(step_distances, clean_val(norm(history[i+1] - history[i])))
+        end
+
+        # CRITICAL FIX: Ground Truth - Striktní izolace od ForwardDiff.Dual pomocí OnceDifferentiable
+        true_min_f = nothing
+        true_min_full = nothing
+        try
+            g! = (G, x) -> begin G .= ∇f_obj(x) end
+            # Tento objekt zabrání knihovně Optim dělat si vlastní autodiff
+            od = Optim.OnceDifferentiable(f_obj, g!, x0)
+            opt_res = Optim.optimize(od, x0, Optim.LBFGS())
+            res_min = Optim.minimizer(opt_res)
+            
+            true_min_full = [clean_val(v) for v in res_min]
+            true_min_f = clean_val(f_obj(res_min))
+        catch e
+            println("Ground truth optimization failed: ", e)
+        end
+
         traj_x_min, traj_x_max = minimum(filter(x -> x !== nothing, x_hist)), maximum(filter(x -> x !== nothing, x_hist))
         traj_y_min, traj_y_max = minimum(filter(x -> x !== nothing, y_hist)), maximum(filter(x -> x !== nothing, y_hist))
         
@@ -248,6 +262,9 @@ end
             "f_hist" => f_hist,
             "grad_norm_hist" => grad_norm_hist,
             "alpha_hist" => alpha_hist_clean,
+            "step_dist_hist" => step_distances,
+            "true_min_f" => true_min_f,
+            "true_min_full" => true_min_full,
             "diverged" => div_info.diverged,
             "divergence_reason" => div_info.reason,
             "divergence_iteration" => div_info.iteration,
