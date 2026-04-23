@@ -1,3 +1,5 @@
+// app.js
+
 const functionSelect = document.getElementById('functionSelect');
 const dimInput = document.getElementById('dimInput');
 const x0Inputs = document.getElementById('x0Inputs');
@@ -5,6 +7,15 @@ const axisX = document.getElementById('axisX');
 const axisY = document.getElementById('axisY');
 const plotDiv = document.getElementById('plotDiv');
 let debounceTimer;
+
+// Globální konfigurace pro SVG export
+const getSvgConfig = (fileName) => ({
+    toImageButtonOptions: {
+        format: 'svg',
+        filename: fileName
+    },
+    responsive: true
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     updateDimensions();
@@ -130,7 +141,7 @@ async function fetchNewContours(xmin, xmax, ymin, ymax) {
 async function drawInitialPlot() {
     const func = functionSelect.value;
     if (func === 'custom' && !document.getElementById('customFormula').value.trim()) {
-        Plotly.newPlot('plotDiv', [], {title: "Awaiting custom formula..."});
+        Plotly.newPlot('plotDiv', [], {title: "Awaiting custom formula..."}, getSvgConfig('empty_plot'));
         return;
     }
 
@@ -153,7 +164,7 @@ async function drawInitialPlot() {
         const data = await res.json();
         
         if(data.error || !data.contour_z) {
-            Plotly.newPlot('plotDiv', [], {title: "Function definition invalid or incomplete."});
+            Plotly.newPlot('plotDiv', [], {title: "Function definition invalid or incomplete."}, getSvgConfig('invalid_plot'));
             return;
         }
 
@@ -171,7 +182,7 @@ async function drawInitialPlot() {
             dragmode: 'zoom'
         };
 
-        Plotly.newPlot('plotDiv', [contourTrace], layout);
+        Plotly.newPlot('plotDiv', [contourTrace], layout, getSvgConfig('initial_contour_plot'));
         attachRelayoutListener();
     } catch(e) {}
 }
@@ -213,7 +224,8 @@ function enlargePlot(divId, title) {
     const layoutCopy = JSON.parse(JSON.stringify(sourceLayout));
     layoutCopy.margin = {t: 20, b: 60, l: 80, r: 20};
     
-    Plotly.newPlot('enlargedPlotDiv', sourceData, layoutCopy);
+    // Přidáno getSvgConfig pro zvětšené okno
+    Plotly.newPlot('enlargedPlotDiv', sourceData, layoutCopy, getSvgConfig(`enlarged_${title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`));
     window.addEventListener('resize', resizeEnlargedPlot);
 }
 
@@ -400,7 +412,7 @@ async function runOptimization() {
             layout.yaxis.scaleratio = 1;
         }
 
-        Plotly.newPlot('plotDiv', traces, layout);
+        Plotly.newPlot('plotDiv', traces, layout, getSvgConfig('optimization_trajectory'));
         attachRelayoutListener();
 
         document.getElementById('resultsPanel').classList.remove('hidden');
@@ -427,7 +439,8 @@ async function runOptimization() {
             margin: { t: 30, b: 50, l: 80, r: 20 },
             xaxis: { title: { text: 'Iteration (k)' } },
             yaxis: { title: { text: yTitle }, type: logType, exponentformat: 'power' },
-            hovermode: 'closest'
+            hovermode: 'closest',
+            dragmode: 'zoom'
         });
 
         const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
@@ -435,24 +448,24 @@ async function runOptimization() {
         Plotly.newPlot('fPlotDiv', [{ 
             x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' },
             hovertemplate: 'Iteration (k): %{x}<br>Value: %{y:.4e}<extra></extra>' 
-        }], getLayout('<i>f(x<sub>k</sub>)</i>'));
+        }], getLayout('<i>f(x<sub>k</sub>)</i>'), getSvgConfig('f_x_evolution'));
 
         Plotly.newPlot('gradPlotDiv', [{ 
             x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' },
             hovertemplate: 'Iteration (k): %{x}<br>||∇f||: %{y:.4e}<extra></extra>' 
-        }], getLayout('||∇<i>f(x<sub>k</sub>)</i>||'));
+        }], getLayout('||∇<i>f(x<sub>k</sub>)</i>||'), getSvgConfig('gradient_norm_evolution'));
 
         const alphaArrAligned = [0, ...data.alpha_hist];
         Plotly.newPlot('alphaPlotDiv', [{ 
             x: itArr, y: alphaArrAligned, mode: 'lines+markers', type: 'scatter', line: { color: 'purple' },
             hovertemplate: 'Iteration (k): %{x}<br>α: %{y:.4e}<extra></extra>' 
-        }], getLayout('<i>α<sub>k</sub></i>'));
+        }], getLayout('<i>α<sub>k</sub></i>'), getSvgConfig('step_size_evolution'));
 
         const distItArr = Array.from({length: data.iterations}, (_, i) => i);
         Plotly.newPlot('distPlotDiv', [{ 
             x: distItArr, y: data.step_dist_hist, mode: 'lines+markers', type: 'scatter', line: { color: '#ff7f0e' },
             hovertemplate: 'Iteration (k): %{x}<br>Distance: %{y:.4e}<extra></extra>' 
-        }], getLayout('||<i>x<sub>k+1</sub> - x<sub>k</sub></i>||'));
+        }], getLayout('||<i>x<sub>k+1</sub> - x<sub>k</sub></i>||'), getSvgConfig('step_distance_evolution'));
         
     } catch (error) {
         document.getElementById('loadingOverlay').classList.remove('active');
