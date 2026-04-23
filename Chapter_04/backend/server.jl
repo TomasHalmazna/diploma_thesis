@@ -3,13 +3,11 @@ using Oxygen
 using HTTP
 using LinearAlgebra
 using ForwardDiff
-using Optim # Pro získání referenčního "Ground Truth" minima
+using Optim
 
-# 1. Loading core and mathematical functions
 include("Core.jl")
 include("TestFunctions.jl")
 
-# 2. Loading optimizers
 include(joinpath("Optimizers", "SteepestDescent.jl"))
 include(joinpath("Optimizers", "ConjugateGradient.jl"))
 include(joinpath("Optimizers", "NewtonMethod.jl"))
@@ -17,7 +15,6 @@ include(joinpath("Optimizers", "DFP.jl"))
 include(joinpath("Optimizers", "BFGS.jl"))
 include(joinpath("Optimizers", "LBFGS.jl"))
 
-# 3. Loading line search methods
 include(joinpath("LineSearch", "Backtracking.jl"))
 include(joinpath("LineSearch", "Bracketing.jl"))
 include(joinpath("LineSearch", "GoldenSectionSearch.jl"))
@@ -29,20 +26,58 @@ function create_custom_function(func_str::String, x0::Vector{Float64})
     try
         decoded_str = HTTP.unescapeuri(func_str)
         clean_str = replace(decoded_str, "\\" => "")
-        
         expr = Meta.parse(clean_str)
         f_raw = eval(:(x -> $expr))
         f = x -> Base.invokelatest(f_raw, x)
-        
         ∇f = x -> ForwardDiff.gradient(f, x)
         Hf = x -> ForwardDiff.hessian(f, x)
-        
         f(x0)
         ∇f(x0)
-        
         return f, ∇f, Hf, nothing
     catch e
         return nothing, nothing, nothing, "Function Error: " * string(e)
+    end
+end
+
+function get_function_objects(selected_function, custom_formula, x0)
+    if selected_function == "custom"
+        return create_custom_function(custom_formula, x0)
+    elseif selected_function == "ackley"
+        return f_ackley, ∇f_ackley, Hf_ackley, nothing
+    elseif selected_function == "beale"
+        return f_beale, ∇f_beale, Hf_beale, nothing
+    elseif selected_function == "booth"
+        return f_booth, ∇f_booth, Hf_booth, nothing
+    elseif selected_function == "goldstein_price"
+        return f_goldstein_price, ∇f_goldstein_price, Hf_goldstein_price, nothing
+    elseif selected_function == "matyas"
+        return f_matyas, ∇f_matyas, Hf_matyas, nothing
+    elseif selected_function == "levi_n13"
+        return f_levi_n13, ∇f_levi_n13, Hf_levi_n13, nothing
+    elseif selected_function == "three_hump_camel"
+        return f_three_hump_camel, ∇f_three_hump_camel, Hf_three_hump_camel, nothing
+    elseif selected_function == "himmelblau"
+        return f_himmel, ∇f_himmel, Hf_himmel, nothing
+    elseif selected_function == "sphere"
+        return f_sphere, ∇f_sphere, Hf_sphere, nothing
+    else
+        return f_rosen, ∇f_rosen, Hf_rosen, nothing
+    end
+end
+
+function get_default_bounds(selected_function, traj_x_min, traj_x_max, traj_y_min, traj_y_max)
+    if selected_function == "rosenbrock"
+        return -2.0, 2.0, -1.0, 3.0
+    elseif selected_function == "beale"
+        return -4.5, 4.5, -4.5, 4.5
+    elseif selected_function in ["booth", "matyas", "levi_n13"]
+        return -10.0, 10.0, -10.0, 10.0
+    elseif selected_function == "goldstein_price"
+        return -2.0, 2.0, -2.0, 2.0
+    elseif selected_function in ["himmelblau", "sphere", "ackley", "three_hump_camel"]
+        return -5.0, 5.0, -5.0, 5.0
+    else
+        return traj_x_min - 2.0, traj_x_max + 2.0, traj_y_min - 2.0, traj_y_max + 2.0
     end
 end
 
@@ -60,18 +95,8 @@ end
     dy = parse(Int, get(query, "dim_y", "2"))
     x0 = parse.(Float64, split(get(query, "x0", "0,0"), ","))
 
-    f_obj = nothing
-    if func_type == "custom"
-        f_obj, _, _, _ = create_custom_function(formula, x0)
-    elseif func_type == "himmelblau"
-        f_obj = f_himmel
-    elseif func_type == "sphere"
-        f_obj = f_sphere
-    else
-        f_obj = f_rosen
-    end
-
-    if f_obj === nothing return Dict("error" => "invalid function") end
+    f_obj, _, _, err = get_function_objects(func_type, formula, x0)
+    if err !== nothing || f_obj === nothing return Dict("error" => "invalid function") end
 
     RESOLUTION = 150
     x_grid = range(xmin, stop=xmax, length=RESOLUTION)
@@ -99,11 +124,7 @@ end
         end
     end
 
-    return Dict(
-        "contour_x" => collect(x_grid),
-        "contour_y" => collect(y_grid),
-        "contour_z" => z_grid
-    )
+    return Dict("contour_x" => collect(x_grid), "contour_y" => collect(y_grid), "contour_z" => z_grid)
 end
 
 @get "/optimize" function(req::HTTP.Request)
@@ -131,17 +152,8 @@ end
     tol = parse(Float64, get(query, "tol", "1e-4"))
     max_iter = parse(Int, get(query, "max_iter", "2000"))
     
-    f_obj, ∇f_obj, Hf_obj = nothing, nothing, nothing
-    if selected_function == "custom"
-        f_obj, ∇f_obj, Hf_obj, err = create_custom_function(custom_formula, x0)
-        if err !== nothing return Dict("status" => "error", "message" => err) end
-    elseif selected_function == "himmelblau"
-        f_obj, ∇f_obj, Hf_obj = f_himmel, ∇f_himmel, Hf_himmel
-    elseif selected_function == "sphere"
-        f_obj, ∇f_obj, Hf_obj = f_sphere, ∇f_sphere, Hf_sphere
-    else
-        f_obj, ∇f_obj, Hf_obj = f_rosen, ∇f_rosen, Hf_rosen
-    end
+    f_obj, ∇f_obj, Hf_obj, err = get_function_objects(selected_function, custom_formula, x0)
+    if err !== nothing return Dict("status" => "error", "message" => err) end
     
     if selected_method == "cg"
         method = ConjugateGradient(Symbol(cg_variant_str))
@@ -190,12 +202,10 @@ end
             push!(step_distances, clean_val(norm(history[i+1] - history[i])))
         end
 
-        # CRITICAL FIX: Ground Truth - Striktní izolace od ForwardDiff.Dual pomocí OnceDifferentiable
         true_min_f = nothing
         true_min_full = nothing
         try
             g! = (G, x) -> begin G .= ∇f_obj(x) end
-            # Tento objekt zabrání knihovně Optim dělat si vlastní autodiff
             od = Optim.OnceDifferentiable(f_obj, g!, x0)
             opt_res = Optim.optimize(od, x0, Optim.LBFGS())
             res_min = Optim.minimizer(opt_res)
@@ -209,13 +219,7 @@ end
         traj_x_min, traj_x_max = minimum(filter(x -> x !== nothing, x_hist)), maximum(filter(x -> x !== nothing, x_hist))
         traj_y_min, traj_y_max = minimum(filter(x -> x !== nothing, y_hist)), maximum(filter(x -> x !== nothing, y_hist))
         
-        if selected_function == "rosenbrock"
-            view_xmin, view_xmax, view_ymin, view_ymax = -2.0, 2.0, -1.0, 3.0
-        elseif selected_function in ["himmelblau", "sphere"]
-            view_xmin, view_xmax, view_ymin, view_ymax = -5.0, 5.0, -5.0, 5.0
-        else
-            view_xmin, view_xmax, view_ymin, view_ymax = traj_x_min - 2.0, traj_x_max + 2.0, traj_y_min - 2.0, traj_y_max + 2.0
-        end
+        view_xmin, view_xmax, view_ymin, view_ymax = get_default_bounds(selected_function, traj_x_min, traj_x_max, traj_y_min, traj_y_max)
 
         plot_xmin, plot_xmax = min(view_xmin, traj_x_min), max(view_xmax, traj_x_max)
         plot_ymin, plot_ymax = min(view_ymin, traj_y_min), max(view_ymax, traj_y_max)
