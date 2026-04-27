@@ -9,7 +9,33 @@ const plotDiv = document.getElementById('plotDiv');
 const API_BASE_URL = "https://optimization-app-wkcn.onrender.com"; // backend server url
 let debounceTimer;
 
+// --- CHYTRÝ LOADER PRO DETEKCI COLD-STARTU ---
+let coldStartTimer;
 
+function showLoading(baseText) {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    
+    loadingText.innerHTML = baseText;
+    loadingOverlay.classList.add('active');
+    
+    clearTimeout(coldStartTimer);
+    // Pokud server neodpoví do 3.5 vteřin, předpokládáme, že spí a probouzí se
+    coldStartTimer = setTimeout(() => {
+        loadingText.innerHTML = `${baseText}<br><br>
+            <span style="font-size: 14px; color: #005A9E; font-weight: normal; max-width: 400px; display: inline-block; margin-top: 10px; line-height: 1.4;">
+                ☕ <b>Waking up the server...</b><br>
+                Since this is hosted on a free tier, the backend goes to sleep after inactivity. 
+                This initial start may take <b>30 to 60 seconds</b>. Subsequent requests will be instant!
+            </span>`;
+    }, 3500);
+}
+
+function hideLoading() {
+    clearTimeout(coldStartTimer);
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+// ---------------------------------------------
 
 // Globální konfigurace pro SVG export
 const getSvgConfig = (fileName) => ({
@@ -120,8 +146,7 @@ function attachRelayoutListener() {
 }
 
 async function fetchNewContours(xmin, xmax, ymin, ymax) {
-    document.getElementById('loadingText').innerText = "Recalculating View...";
-    document.getElementById('loadingOverlay').classList.add('active');
+    showLoading("Recalculating View...");
 
     const func = functionSelect.value;
     const N = func === 'himmelblau' ? 2 : parseInt(dimInput.value);
@@ -146,8 +171,7 @@ async function fetchNewContours(xmin, xmax, ymin, ymax) {
             Plotly.redraw(plotDiv);
         }
     } catch (error) {} finally {
-        document.getElementById('loadingOverlay').classList.remove('active');
-        document.getElementById('loadingText').innerText = "Optimizing... Please wait";
+        hideLoading();
     }
 }
 
@@ -170,6 +194,8 @@ async function drawInitialPlot() {
     const x0_str = x0_arr.join(",");
     const customFormula = func === 'custom' ? document.getElementById('customFormula').value : "";
 
+    showLoading("Initializing Function Topology...");
+
     const url = `${API_BASE_URL}/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
     
     try {
@@ -178,6 +204,7 @@ async function drawInitialPlot() {
         
         if(data.error || !data.contour_z) {
             Plotly.newPlot('plotDiv', [], {title: "Function definition invalid or incomplete."}, getSvgConfig('invalid_plot'));
+            hideLoading();
             return;
         }
 
@@ -197,7 +224,9 @@ async function drawInitialPlot() {
 
         Plotly.newPlot('plotDiv', [contourTrace], layout, getSvgConfig('initial_contour_plot'));
         attachRelayoutListener();
-    } catch(e) {}
+    } catch(e) {} finally {
+        hideLoading();
+    }
 }
 
 const methodSelect = document.getElementById('methodSelect');
@@ -344,13 +373,14 @@ async function runOptimization() {
     const customFormula = func === 'custom' ? document.getElementById('customFormula').value : '';
     const url = `${API_BASE_URL}/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_arr.join(',')}&dim_x=${axisX.value}&dim_y=${axisY.value}&term_criterion=${termCriterion}&tol=${tolVal}&max_iter=${maxIterVal}`;
     
-    document.getElementById('loadingOverlay').classList.add('active');
+    showLoading("Optimizing... Please Wait");
     
     try {
         const response = await fetch(url);
         const data = await response.json();
-        document.getElementById('loadingOverlay').classList.remove('active');
         
+        hideLoading();
+
         if (data.status === 'error') return alert("Error: " + data.message);
         if (data.status !== "success" && !data.diverged) return alert("Optimization failed.");
 
@@ -452,42 +482,41 @@ async function runOptimization() {
             warnBox.classList.add('hidden');
         }
 
-        // 2x2 MINI GRAFY (Vědecký formát, HTML matematické značky a Hover info)
         const logType = document.getElementById('logScaleCb').checked ? 'log' : 'linear';
         
-        const getLayout = (yTitle) => ({
+        const commonLayout = {
             margin: { t: 30, b: 50, l: 80, r: 20 },
             xaxis: { title: { text: 'Iteration (k)' } },
-            yaxis: { title: { text: yTitle }, type: logType, exponentformat: 'power' },
+            yaxis: { type: logType, exponentformat: 'power' },
             hovermode: 'closest',
             dragmode: 'zoom'
-        });
+        };
 
         const itArr = Array.from({length: data.iterations + 1}, (_, i) => i);
         
         Plotly.newPlot('fPlotDiv', [{ 
             x: itArr, y: data.f_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'blue' },
             hovertemplate: 'Iteration (k): %{x}<br>Value: %{y:.4e}<extra></extra>' 
-        }], getLayout('<i>f(x<sub>k</sub>)</i>'), getSvgConfig('f_x_evolution'));
+        }], { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: { text: '<i>f(x<sub>k</sub>)</i>' } } }, getSvgConfig('f_x_evolution'));
 
         Plotly.newPlot('gradPlotDiv', [{ 
             x: itArr, y: data.grad_norm_hist, mode: 'lines+markers', type: 'scatter', line: { color: 'green' },
             hovertemplate: 'Iteration (k): %{x}<br>||∇f||: %{y:.4e}<extra></extra>' 
-        }], getLayout('||∇<i>f(x<sub>k</sub>)</i>||'), getSvgConfig('gradient_norm_evolution'));
+        }], { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: { text: '||∇<i>f(x<sub>k</sub>)</i>||' } } }, getSvgConfig('gradient_norm_evolution'));
 
         const alphaArrAligned = [0, ...data.alpha_hist];
         Plotly.newPlot('alphaPlotDiv', [{ 
             x: itArr, y: alphaArrAligned, mode: 'lines+markers', type: 'scatter', line: { color: 'purple' },
             hovertemplate: 'Iteration (k): %{x}<br>α: %{y:.4e}<extra></extra>' 
-        }], getLayout('<i>α<sub>k</sub></i>'), getSvgConfig('step_size_evolution'));
+        }], { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: { text: '<i>α<sub>k</sub></i>' } } }, getSvgConfig('step_size_evolution'));
 
         const distItArr = Array.from({length: data.iterations}, (_, i) => i);
         Plotly.newPlot('distPlotDiv', [{ 
             x: distItArr, y: data.step_dist_hist, mode: 'lines+markers', type: 'scatter', line: { color: '#ff7f0e' },
             hovertemplate: 'Iteration (k): %{x}<br>Distance: %{y:.4e}<extra></extra>' 
-        }], getLayout('||<i>x<sub>k+1</sub> - x<sub>k</sub></i>||'), getSvgConfig('step_distance_evolution'));
+        }], { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: { text: '||<i>x<sub>k+1</sub> - x<sub>k</sub></i>||' } } }, getSvgConfig('step_distance_evolution'));
         
     } catch (error) {
-        document.getElementById('loadingOverlay').classList.remove('active');
+        hideLoading();
     }
 }
