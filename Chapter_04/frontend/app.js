@@ -6,7 +6,10 @@ const x0Inputs = document.getElementById('x0Inputs');
 const axisX = document.getElementById('axisX');
 const axisY = document.getElementById('axisY');
 const plotDiv = document.getElementById('plotDiv');
+const API_BASE_URL = "https://optimization-app-wkcn.onrender.com"; // backend server url
 let debounceTimer;
+
+
 
 // Globální konfigurace pro SVG export
 const getSvgConfig = (fileName) => ({
@@ -130,7 +133,7 @@ async function fetchNewContours(xmin, xmax, ymin, ymax) {
     const x0_str = x0_arr.join(",");
     const customFormula = func === 'custom' ? document.getElementById('customFormula').value : "";
 
-    const url = `http://127.0.0.1:8080/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
+    const url = `${API_BASE_URL}/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
     
     try {
         const res = await fetch(url);
@@ -167,7 +170,7 @@ async function drawInitialPlot() {
     const x0_str = x0_arr.join(",");
     const customFormula = func === 'custom' ? document.getElementById('customFormula').value : "";
 
-    const url = `http://127.0.0.1:8080/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
+    const url = `${API_BASE_URL}/contours?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&dim_x=${axisX.value}&dim_y=${axisY.value}&x0=${x0_str}`;
     
     try {
         const res = await fetch(url);
@@ -339,7 +342,7 @@ async function runOptimization() {
     else if (method === 'lbfgs') methodLabel = `L-BFGS (m=${mValue})`;
     
     const customFormula = func === 'custom' ? document.getElementById('customFormula').value : '';
-    const url = `http://127.0.0.1:8080/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_arr.join(',')}&dim_x=${axisX.value}&dim_y=${axisY.value}&term_criterion=${termCriterion}&tol=${tolVal}&max_iter=${maxIterVal}`;
+    const url = `${API_BASE_URL}/optimize?function=${func}&custom_formula=${encodeURIComponent(customFormula)}&method=${method}&cg_variant=${document.getElementById('cgVariantSelect').value}&m=${mValue}&linesearch=${ls}&auto_bracket=${document.getElementById('autoBracketCb').checked}&bracket_a=${document.getElementById('bracketA').value}&bracket_b=${document.getElementById('bracketB').value}&x0=${x0_arr.join(',')}&dim_x=${axisX.value}&dim_y=${axisY.value}&term_criterion=${termCriterion}&tol=${tolVal}&max_iter=${maxIterVal}`;
     
     document.getElementById('loadingOverlay').classList.add('active');
     
