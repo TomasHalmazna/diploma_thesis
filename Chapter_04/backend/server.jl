@@ -5,9 +5,11 @@ using LinearAlgebra
 using ForwardDiff
 using Optim
 
+# 1. Load core and mathematical functions
 include("Core.jl")
 include("TestFunctions.jl")
 
+# 2. Load optimizers
 include(joinpath("Optimizers", "SteepestDescent.jl"))
 include(joinpath("Optimizers", "ConjugateGradient.jl"))
 include(joinpath("Optimizers", "NewtonMethod.jl"))
@@ -15,6 +17,7 @@ include(joinpath("Optimizers", "DFP.jl"))
 include(joinpath("Optimizers", "BFGS.jl"))
 include(joinpath("Optimizers", "LBFGS.jl"))
 
+# 3. Load line search methods
 include(joinpath("LineSearch", "Backtracking.jl"))
 include(joinpath("LineSearch", "Bracketing.jl"))
 include(joinpath("LineSearch", "GoldenSectionSearch.jl"))
@@ -22,23 +25,33 @@ include(joinpath("LineSearch", "DichotomousSearch.jl"))
 include(joinpath("LineSearch", "QuadraticFitSearch.jl"))
 include(joinpath("LineSearch", "BrentsMethod.jl")) 
 
+# Helper function to create a custom user-defined function and its derivatives.
+# Takes x0 as an argument to verify if the function is defined at the starting point.
 function create_custom_function(func_str::String, x0::Vector{Float64})
     try
         decoded_str = HTTP.unescapeuri(func_str)
         clean_str = replace(decoded_str, "\\" => "")
+        
         expr = Meta.parse(clean_str)
         f_raw = eval(:(x -> $expr))
-        f = x -> Base.invokelatest(f_raw, x)
+        
+        # Enforce type stability so Optim.jl does not crash on "Any" return types
+        f = x -> convert(eltype(x), Base.invokelatest(f_raw, x))
+        
         ∇f = x -> ForwardDiff.gradient(f, x)
         Hf = x -> ForwardDiff.hessian(f, x)
+        
+        # Test if function and gradient are computable at the initial point
         f(x0)
         ∇f(x0)
+        
         return f, ∇f, Hf, nothing
     catch e
         return nothing, nothing, nothing, "Function Error: " * string(e)
     end
 end
 
+# Maps the string identifier from the frontend to the actual Julia functions
 function get_function_objects(selected_function, custom_formula, x0)
     if selected_function == "custom"
         return create_custom_function(custom_formula, x0)
@@ -65,6 +78,7 @@ function get_function_objects(selected_function, custom_formula, x0)
     end
 end
 
+# Provides reasonable initial bounding boxes for the 2D contour plot
 function get_default_bounds(selected_function, traj_x_min, traj_x_max, traj_y_min, traj_y_max)
     if selected_function == "rosenbrock"
         return -2.0, 2.0, -1.0, 3.0
@@ -77,10 +91,12 @@ function get_default_bounds(selected_function, traj_x_min, traj_x_max, traj_y_mi
     elseif selected_function in ["himmelblau", "sphere", "ackley", "three_hump_camel"]
         return -5.0, 5.0, -5.0, 5.0
     else
+        # Dynamic fallback based on the actual trajectory
         return traj_x_min - 2.0, traj_x_max + 2.0, traj_y_min - 2.0, traj_y_max + 2.0
     end
 end
 
+# ENDPOINT: Generates Z-values for the contour map based on the current frontend view
 @get "/contours" function(req::HTTP.Request)
     query = queryparams(req)
     func_type = get(query, "function", "rosenbrock")
@@ -96,12 +112,15 @@ end
     x0 = parse.(Float64, split(get(query, "x0", "0,0"), ","))
 
     f_obj, _, _, err = get_function_objects(func_type, formula, x0)
-    if err !== nothing || f_obj === nothing return Dict("error" => "invalid function") end
+    if err !== nothing || f_obj === nothing 
+        return Dict("error" => "invalid function") 
+    end
 
     RESOLUTION = 150
     x_grid = range(xmin, stop=xmax, length=RESOLUTION)
     y_grid = range(ymin, stop=ymax, length=RESOLUTION)
     
+    # Initialize array of arrays for robust JSON serialization
     z_grid = Vector{Vector{Union{Float64, Nothing}}}(undef, RESOLUTION)
     for j in 1:RESOLUTION
         z_grid[j] = Vector{Union{Float64, Nothing}}(undef, RESOLUTION)
@@ -120,6 +139,7 @@ end
                     z_grid[j][i] = val
                 end
             catch
+                # Silently ignore domain errors during grid generation
             end
         end
     end
@@ -127,6 +147,7 @@ end
     return Dict("contour_x" => collect(x_grid), "contour_y" => collect(y_grid), "contour_z" => z_grid)
 end
 
+# ENDPOINT: Runs the optimization algorithm and returns the trajectory and metrics
 @get "/optimize" function(req::HTTP.Request)
     query = queryparams(req)
     
@@ -153,8 +174,11 @@ end
     max_iter = parse(Int, get(query, "max_iter", "2000"))
     
     f_obj, ∇f_obj, Hf_obj, err = get_function_objects(selected_function, custom_formula, x0)
-    if err !== nothing return Dict("status" => "error", "message" => err) end
+    if err !== nothing 
+        return Dict("status" => "error", "message" => err) 
+    end
     
+    # Optimizer selection
     if selected_method == "cg"
         method = ConjugateGradient(Symbol(cg_variant_str))
     elseif selected_method == "newton"
@@ -169,6 +193,7 @@ end
         method = SteepestDescent()
     end
     
+    # Line search selection
     if ls_type == "gss"
         linesearch = GoldenSectionSearch(auto_bracket=auto_bracket, manual_interval=(bracket_a, bracket_b))
     elseif ls_type == "dichotomous"
@@ -182,6 +207,7 @@ end
     end
     
     try
+        # Run the core algorithm
         history, alpha_hist, div_info = run_optimization(f_obj, ∇f_obj, x0, method, linesearch; 
                                                          max_iter=max_iter, term_criterion=term_criterion, tol=tol)
         
@@ -197,36 +223,49 @@ end
         grad_norm_hist = [clean_val(norm(∇f_obj(pt))) for pt in history]
         alpha_hist_clean = [clean_val(v) for v in alpha_hist]
         
+        # Step distance calculation ||x_{k+1} - x_k||
         step_distances = Float64[]
         for i in 1:(length(history)-1)
             push!(step_distances, clean_val(norm(history[i+1] - history[i])))
         end
 
+        # Calculate Ground Truth using Optim.jl
         true_min_f = nothing
         true_min_full = nothing
         try
+            # First attempt: Fast gradient method L-BFGS
             g! = (G, x) -> begin G .= ∇f_obj(x) end
-            od = Optim.OnceDifferentiable(f_obj, g!, x0)
-            opt_res = Optim.optimize(od, x0, Optim.LBFGS())
+            od = Optim.OnceDifferentiable(f_obj, g!, copy(x0))
+            opt_res = Optim.optimize(od, copy(x0), Optim.LBFGS())
             res_min = Optim.minimizer(opt_res)
             
             true_min_full = [clean_val(v) for v in res_min]
             true_min_f = clean_val(f_obj(res_min))
         catch e
-            println("Ground truth optimization failed: ", e)
+            println("L-BFGS failed (likely singularity/non-differentiable minimum). Trying Nelder-Mead...")
+            try
+                # Second attempt: Nelder-Mead, which does not rely on gradients and can handle non-smooth functions
+                opt_res_nm = Optim.optimize(f_obj, copy(x0), Optim.NelderMead())
+                res_min_nm = Optim.minimizer(opt_res_nm)
+                
+                true_min_full = [clean_val(v) for v in res_min_nm]
+                true_min_f = clean_val(f_obj(res_min_nm))
+            catch e2
+                println("Ground truth optimization entirely failed: ", e2)
+            end
         end
 
         traj_x_min, traj_x_max = minimum(filter(x -> x !== nothing, x_hist)), maximum(filter(x -> x !== nothing, x_hist))
         traj_y_min, traj_y_max = minimum(filter(x -> x !== nothing, y_hist)), maximum(filter(x -> x !== nothing, y_hist))
         
+        # Calculate bounding box for the UI map
         view_xmin, view_xmax, view_ymin, view_ymax = get_default_bounds(selected_function, traj_x_min, traj_x_max, traj_y_min, traj_y_max)
-
         plot_xmin, plot_xmax = min(view_xmin, traj_x_min), max(view_xmax, traj_x_max)
         plot_ymin, plot_ymax = min(view_ymin, traj_y_min), max(view_ymax, traj_y_max)
         
+        # Add padding
         pad_x = (plot_xmax - plot_xmin) * 0.1
         pad_y = (plot_ymax - plot_ymin) * 0.1
-        
         plot_xmin -= pad_x
         plot_xmax += pad_x
         plot_ymin -= pad_y
@@ -242,6 +281,7 @@ end
             fill!(z_grid[j], nothing)
         end
         
+        # Generate contour background for the path
         base_x = copy(x0)
         for (j, yv) in enumerate(y_grid)
             for (i, xv) in enumerate(x_grid)
@@ -279,9 +319,11 @@ end
             "contour_z" => z_grid
         )
     catch e
+        # Domain errors or math errors (like log of negative number) are common when the optimization goes out of bounds.
+        # We catch them and provide a user-friendly message.
         error_string = string(e)
         if occursin("DomainError", error_string) || occursin("Math", error_string)
-            return Dict("status" => "error", "message" => "Method left the domain (DomainError). Try different x0 or smaller steps.")
+            return Dict("status" => "error", "message" => "The method left the function's domain (DomainError). Unconstrained optimization algorithms do not know the boundaries of functions (such as logarithm or square root). Try a different starting point or a smaller step.")
         else
             return Dict("status" => "error", "message" => "Runtime error: " * error_string)
         end
