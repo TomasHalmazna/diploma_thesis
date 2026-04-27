@@ -347,5 +347,15 @@ function cors_middleware(handler)
     end
 end
 
-println("Starting server at http://127.0.0.1:8080 ...")
-serve(port=8080, middleware=[cors_middleware])
+
+# Used for local development with frontend running on a different port
+#println("Starting server at http://127.0.0.1:8080 ...")
+#serve(port=8080, middleware=[cors_middleware])
+
+# Dynamically determine port for production deployment
+port = parse(Int, get(ENV, "PORT", "8080"))
+
+println("Starting production server on port $port...")
+
+# host="0.0.0.0" is necessary for external access
+serve(host="0.0.0.0", port=port, middleware=[cors_middleware])
