@@ -1,4 +1,10 @@
 # backend/server.jl
+
+# initialize the package environment and load dependencies
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
 using Oxygen
 using HTTP
 using LinearAlgebra
