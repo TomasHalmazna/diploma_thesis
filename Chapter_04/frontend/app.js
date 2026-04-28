@@ -9,8 +9,9 @@ const plotDiv = document.getElementById('plotDiv');
 const API_BASE_URL = "https://optimization-app-wkcn.onrender.com"; // backend server url
 let debounceTimer;
 
-// --- CHYTRÝ LOADER PRO DETEKCI COLD-STARTU ---
+// --- COLD-START detection ---
 let coldStartTimer;
+let lastServerInteraction = 0; // Čas posledního úspěšného spojení (v milisekundách)
 
 function showLoading(baseText) {
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -20,24 +21,33 @@ function showLoading(baseText) {
     loadingOverlay.classList.add('active');
     
     clearTimeout(coldStartTimer);
-    // Pokud server neodpoví do 3.5 vteřin, předpokládáme, že spí a probouzí se
-    coldStartTimer = setTimeout(() => {
-        loadingText.innerHTML = `${baseText}<br><br>
-            <span style="font-size: 14px; color: #005A9E; font-weight: normal; max-width: 400px; display: inline-block; margin-top: 10px; line-height: 1.4;">
-                ☕ <b>Waking up the server...</b><br>
-                Since this is hosted on a free tier, the backend goes to sleep after inactivity. 
-                This initial start may take <b>30 to 60 seconds</b>. Subsequent requests will be instant!
-            </span>`;
-    }, 3500);
+    
+    // Render sleeps after approximately 15 minutes of inactivity
+    // We assume that if the last interaction was more than 10 minutes ago, 
+    // we might be facing a cold start, so we show the message after a short delay
+    const timeSinceLastInteraction = Date.now() - lastServerInteraction;
+    
+    if (timeSinceLastInteraction > 600000) {
+        coldStartTimer = setTimeout(() => {
+            loadingText.innerHTML = `${baseText}<br><br>
+                <span style="font-size: 14px; color: #005A9E; font-weight: normal; max-width: 400px; display: inline-block; margin-top: 10px; line-height: 1.4;">
+                    ☕ <b>Waking up the server...</b><br>
+                    Since this is hosted on a free tier, the backend goes to sleep after inactivity. 
+                    This initial start may take <b>30 to 60 seconds</b>. Subsequent requests will be instant!
+                </span>`;
+        }, 3500);
+    }
 }
 
 function hideLoading() {
     clearTimeout(coldStartTimer);
     document.getElementById('loadingOverlay').classList.remove('active');
+    // Reset the timer of interaction after a successful response
+    lastServerInteraction = Date.now();
 }
 // ---------------------------------------------
 
-// Globální konfigurace pro SVG export
+// Global configuration for SVG export
 const getSvgConfig = (fileName) => ({
     toImageButtonOptions: {
         format: 'svg',
