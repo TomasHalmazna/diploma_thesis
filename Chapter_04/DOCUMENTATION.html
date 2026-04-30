@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DOCUMENTATION.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<meta charset="UTF-8">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<h1 id="optimization-algorithm-visualizer---complete-documentation">Optimization Algorithm Visualizer - Complete Documentation</h1>
+<h2 id="%F0%9F%93%8B-table-of-contents">📋 Table of Contents</h2>
+<ul>
+<li><a href="#1-project-overview">1. Project Overview</a></li>
+<li><a href="#2-architecture">2. Architecture</a></li>
+<li><a href="#3-technology-stack">3. Technology Stack</a></li>
+<li><a href="#4-backend-system">4. Backend System</a>
+<ul>
+<li><a href="#41-core-optimization-framework-corejl">4.1 Core Optimization Framework</a></li>
+<li><a href="#42-server-endpoints-serverjl">4.2 Server Endpoints</a></li>
+</ul>
+</li>
+<li><a href="#5-frontend-system">5. Frontend System</a>
+<ul>
+<li><a href="#51-html-structure-indexhtml">5.1 HTML Structure</a></li>
+<li><a href="#52-javascript-application-appjs">5.2 JavaScript Application</a></li>
+<li><a href="#53-styling-stylecss">5.3 Styling</a></li>
+</ul>
+</li>
+<li><a href="#6-optimization-algorithms">6. Optimization Algorithms</a></li>
+<li><a href="#7-line-search-methods">7. Line Search Methods</a></li>
+<li><a href="#8-test-functions">8. Test Functions</a></li>
+<li><a href="#9-user-guide">9. User Guide</a></li>
+<li><a href="#10-api-reference">10. API Reference</a></li>
+<li><a href="#11-infrastructure--cold-start-handling">11. Infrastructure &amp; Cold Start Handling</a></li>
+<li><a href="#12-file-structure-summary">12. File Structure Summary</a></li>
+<li><a href="#13-troubleshooting">13. Troubleshooting</a></li>
+<li><a href="#14-references--resources">14. References &amp; Resources</a></li>
+</ul>
+<hr>
+<h2 id="1-project-overview">1. Project Overview</h2>
+<p>The <strong>Optimization Algorithm Visualizer</strong> is an interactive web application designed to demonstrate various mathematical optimization algorithms. Users can:</p>
+<ul>
+<li><strong>Select from 10 built-in test functions</strong> or define custom functions</li>
+<li><strong>Choose among 6 optimization methods</strong> with multiple variants</li>
+<li><strong>Combine with 5 different line search strategies</strong> including the choice of auto-bracketing</li>
+<li><strong>Configure optimization parameters</strong> including dimensionality, starting points, and termination criteria</li>
+<li><strong>Visualize optimization trajectories</strong> on 2D contour plots</li>
+<li><strong>Monitor convergence behavior</strong> through evolution plots (function value, gradient norm, step size, step distance)</li>
+<li><strong>Compare against ground truth</strong> computed via Julia's <code>Optim.jl</code> library</li>
+</ul>
+<hr>
+<h2 id="2-architecture">2. Architecture</h2>
+<pre class="hljs"><code><div>┌────────────────────────────────────────────────────────────┐
+│              WEB BROWSER (Frontend)                        │
+├────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │       index.html + app.js + style.css                │  │
+│  │                                                      │  │
+│  │  • Interactive UI with form controls                 │  │
+│  │  • Plotly.js visualization engine                    │  │
+│  │  • Fetch API for HTTP communication                  │  │
+│  │  • MathJax for formula rendering                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ▲                                │
+│                           │ HTTP/REST                      │
+│                           ▼                                │
+└────────────────────────────────────────────────────────────┘
+                            │
+                      GET requests
+                            │
+┌────────────────────────────────────────────────────────────┐
+│          BACKEND SERVER (Julia + Oxygen)                   │
+├────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │               server.jl                              │  │
+│  │                                                      │  │
+│  │  • /contours  → 2D contour grid generation           │  │
+│  │  • /optimize  → Run optimization algorithm           │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ▲                                │
+│                           │ Function Dispatch              │
+│                           ▼                                │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                 Core.jl                              │  │
+│  │  • Optimization state management                     │  │
+│  │  • Main iterative schema (run_optimization)          │  │
+│  │  • Divergence detection &amp; monitoring                 │  │
+│  │  • Abstract optimizer &amp; line search types            │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ▲                                │
+│        ┌──────────────────┼──────────────────┐             │
+│        │                  │                  │             │
+│        ▼                  ▼                  ▼             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ Optimizers/  │  │ LineSearch/  │  │TestFunctions.jl  │  │
+│  │ (6 methods)  │  │ (5 methods)  │  │                  │  │
+│  │              │  │              │  │ • Rosenbrock     │  │
+│  │ • Steepest   │  │ • Backtrack. │  │ • Ackley         │  │
+│  │   Descent    │  │ • Golden     │  │ • Sphere         │  │
+│  │ • Conjugate  │  │   Section    │  │ • Himmelblau     │  │
+│  │   Gradient   │  │ • Dichot.    │  │ • Beale          │  │
+│  │ • Newton     │  │ • Quadratic  │  │ • ...            │  │
+│  │ • DFP        │  │   Fit        │  │ • Custom user    │  │
+│  │ • BFGS       │  │ • Brent's    │  │   defined        │  │
+│  │ • L-BFGS     │  │              │  │                  │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │           External Libraries                         │  │
+│  │                                                      │  │
+│  │  • ForwardDiff.jl   (Automatic differentiation)      │  │
+│  │  • LinearAlgebra    (Matrix operations)              │  │
+│  │  • Optim.jl         (Ground truth via L-BFGS)        │  │
+│  │  • Oxygen.jl        (HTTP server framework)          │  │
+│  └──────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────┘
+</div></code></pre>
+<h3 id="component-interaction-flow">Component Interaction Flow</h3>
+<pre class="hljs"><code><div>User Interaction (Frontend)
+        │
+        ├─→ User selects function, method, line search
+        │
+        └─→ Click &quot;Run Optimization&quot; button
+                │
+                ├─→ showLoading() displays spinner
+                │
+                └─→ Construct URL with parameters
+                    │
+                    └─→ HTTP GET /optimize endpoint
+                        │
+                        ├─→ Parse query parameters
+                        │
+                        ├─→ Instantiate optimizer + line search
+                        │
+                        ├─→ Call run_optimization() from Core.jl
+                        │
+                        ├─→ Collect trajectory, metrics, divergence info
+                        │
+                        ├─→ Compute ground truth via Optim.jl:
+                        │   • First attempts L-BFGS optimization
+                        │   • If L-BFGS fails, falls back to Nelder-Mead
+                        │   • Returns minimizer and minimum value
+                        │
+                        ├─→ Return JSON response with:
+                        │   - Full trajectory history
+                        │   - Convergence metrics at each iteration
+                        │   - Ground truth coordinates &amp; value
+                        │   - 2D contour grid for visualization
+                        │
+                └─→ Receive response in JavaScript
+                    │
+                    ├─→ Parse data
+                    │
+                    ├─→ Create Plotly visualizations:
+                    │   - Main contour plot with trajectory overlay
+                    │   - Start point (green square)
+                    │   - Intermediate points (blue dots)
+                    │   - Convergence point (yellow star)
+                    │   - Ground truth (black X)
+                    │
+                    ├─→ Display 4 evolution plots:
+                    │   - f(x_k) evolution
+                    │   - ||∇f(x_k)|| evolution
+                    │   - α_k step size evolution
+                    │   - ||Δx_k|| step distance evolution
+                    │
+                    └─→ hideLoading() and show results panel
+</div></code></pre>
+<hr>
+<h2 id="3-technology-stack">3. Technology Stack</h2>
+<h3 id="backend">Backend</h3>
+<ul>
+<li><strong>Language</strong>: Julia (scientific computing language)</li>
+<li><strong>Web Framework</strong>: <a href="https://github.com/ndortega/Oxygen.jl">Oxygen.jl</a> (lightweight HTTP server)</li>
+<li><strong>Math Libraries</strong>:
+<ul>
+<li><code>ForwardDiff.jl</code> - Automatic differentiation for gradients &amp; Hessians</li>
+<li><code>LinearAlgebra</code> - Matrix operations</li>
+<li><code>Optim.jl</code> - Ground truth optimization</li>
+</ul>
+</li>
+</ul>
+<h3 id="frontend">Frontend</h3>
+<ul>
+<li><strong>HTML5</strong> - Markup structure</li>
+<li><strong>CSS3</strong> - Styling with responsive layout</li>
+<li><strong>JavaScript (ES6+)</strong> - Client-side logic and interactivity</li>
+<li><strong>Visualization</strong>: <a href="https://plotly.com/javascript/">Plotly.js v2.27.0</a> - Interactive charts</li>
+<li><strong>Math Rendering</strong>: <a href="https://www.mathjax.org/">MathJax v3</a> - LaTeX formula display</li>
+</ul>
+<h3 id="infrastructure">Infrastructure</h3>
+<ul>
+<li><strong>Hosting</strong>: Render.com (free tier)</li>
+<li><strong>Resource Constraints</strong>: Limited to 0.1 CPU and 512MB RAM on free tier
+<ul>
+<li>This results in slower performance, especially for high-dimensional problems or complex functions</li>
+<li>Initial requests may take 30-120 seconds (cold start after 15 minutes of inactivity)</li>
+<li>Subsequent requests after warm start are typically faster</li>
+</ul>
+</li>
+<li><strong>API Base URL</strong>: <code>https://optimization-app-wkcn.onrender.com</code></li>
+<li><strong>CORS Handling</strong>: Backend includes Access-Control-Allow-Origin headers allowing cross-origin requests from any domain
+<ul>
+<li>This enables the frontend (running on a different domain) to communicate with the backend via fetch API</li>
+</ul>
+</li>
+</ul>
+<h3 id="dependencies">Dependencies</h3>
+<p>See <code>backend/Project.toml</code>:</p>
+<pre class="hljs"><code><div>ForwardDiff = <span class="hljs-string">"f6369f11-7733-5829-9624-2563aa707210"</span>
+HTTP = <span class="hljs-string">"cd3eb016-35fb-5094-929b-558a96fad6f3"</span>
+Optim = <span class="hljs-string">"429524aa-4258-5aef-a3af-852621145aeb"</span>
+Oxygen = <span class="hljs-string">"df9a0d86-3283-4920-82dc-4555fc0d1d8b"</span>
+</div></code></pre>
+<hr>
+<h2 id="4-backend-system">4. Backend System</h2>
+<h3 id="41-core-optimization-framework-corejl">4.1 Core Optimization Framework (Core.jl)</h3>
+<p>The backend employs an abstract type hierarchy to support extensible algorithm design. This object-oriented approach allows different optimizer and line search implementations to be swapped without changing the core algorithm structure.</p>
+<h4 id="abstract-base-types">Abstract Base Types</h4>
+<p>Julia uses abstract types to define interfaces that concrete implementations must follow:</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">abstract type</span> AbstractOptimizer <span class="hljs-keyword">end</span>      <span class="hljs-comment"># Interface for optimization methods</span>
+<span class="hljs-keyword">abstract type</span> AbstractLineSearch <span class="hljs-keyword">end</span>     <span class="hljs-comment"># Interface for line search strategies</span>
+</div></code></pre>
+<p>Each concrete optimizer (SteepestDescent, BFGS, etc.) and line search method (Backtracking, BrentsMethod, etc.) must be concrete subtypes of these abstracts. The core algorithm then dispatches to the appropriate implementation via Julia's multiple dispatch system.</p>
+<h4 id="optimization-state">Optimization State</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">mutable struct</span> OptimizationState
+    x::<span class="hljs-built_in">Vector</span>{<span class="hljs-built_in">Float64</span>}                   <span class="hljs-comment"># Current position</span>
+    gradient::<span class="hljs-built_in">Vector</span>{<span class="hljs-built_in">Float64</span>}            <span class="hljs-comment"># Current gradient ∇f(x)</span>
+    inverse_hessian::<span class="hljs-built_in">Matrix</span>{<span class="hljs-built_in">Float64</span>}     <span class="hljs-comment"># Approximate or exact inverse Hessian</span>
+    history::<span class="hljs-built_in">Vector</span>{<span class="hljs-built_in">Any</span>}                 <span class="hljs-comment"># For LBFGS: stores (s, y, ρ) triplets</span>
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<h4 id="divergence-tracking">Divergence Tracking</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">mutable struct</span> DivergenceInfo
+    diverged::<span class="hljs-built_in">Bool</span>                       <span class="hljs-comment"># Whether divergence was detected</span>
+    reason::<span class="hljs-built_in">String</span>                       <span class="hljs-comment"># Description of divergence</span>
+    iteration::<span class="hljs-built_in">Int</span>                       <span class="hljs-comment"># When it occurred</span>
+    grad_norm::<span class="hljs-built_in">Float64</span>                   <span class="hljs-comment"># Gradient magnitude at divergence</span>
+    f_value::<span class="hljs-built_in">Float64</span>                     <span class="hljs-comment"># Function value at divergence</span>
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<h4 id="key-constants--thresholds">Key Constants &amp; Thresholds</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> GRAD_NORM_THRESHOLD = <span class="hljs-number">1e8</span>        <span class="hljs-comment"># Gradient explosion</span>
+<span class="hljs-keyword">const</span> F_VALUE_THRESHOLD = <span class="hljs-number">1e20</span>         <span class="hljs-comment"># Function value explosion</span>
+<span class="hljs-keyword">const</span> MIN_STEP_SIZE = <span class="hljs-number">1e-16</span>            <span class="hljs-comment"># Step size collapse</span>
+</div></code></pre>
+<h4 id="main-optimization-loop">Main Optimization Loop</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">function</span> run_optimization(f, ∇f, x0::<span class="hljs-built_in">Vector</span>{<span class="hljs-built_in">Float64</span>}, 
+                         method::AbstractOptimizer, 
+                         linesearch::AbstractLineSearch; 
+                         max_iter=<span class="hljs-number">2000</span>, 
+                         term_criterion=<span class="hljs-string">"gradient"</span>, 
+                         tol=<span class="hljs-number">1e-4</span>)
+</div></code></pre>
+<p><strong>Algorithm</strong>:</p>
+<ol>
+<li>Initialize state:
+<ul>
+<li>Position: x_k ← x₀</li>
+<li>Gradient: ∇f_k ← ∇f(x₀)</li>
+<li>Inverse Hessian approximation: W_k ← I (identity matrix of dimension n×n)</li>
+</ul>
+</li>
+<li>For each iteration k = 1 to max_iter:
+<ul>
+<li>Check if termination criterion is satisfied:
+<ul>
+<li>If yes, exit loop and return converged solution</li>
+<li>If no, continue to next step</li>
+</ul>
+</li>
+<li>Compute search direction: d_k via <code>compute_direction(method, state)</code></li>
+<li>Perform line search: α_k via <code>compute_step_size(linesearch, f, ∇f, state, d_k)</code></li>
+<li>Update position: x_{k+1} ← x_k + α_k · d_k</li>
+<li>Update gradient: ∇f_{k+1} ← ∇f(x_{k+1})</li>
+<li>Check for divergence via <code>check_divergence(...)</code></li>
+<li>If diverged, stop and report divergence reason</li>
+<li>Update method-specific state (Hessian approximations, CG coefficients, LBFGS history, etc.)</li>
+</ul>
+</li>
+<li>Return trajectory history, step size history, and divergence information</li>
+</ol>
+<h4 id="divergence-detection">Divergence Detection</h4>
+<p>The <code>check_divergence()</code> function monitors for algorithmic failures:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NaN/Inf in gradient</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>NaN/Inf in f(x)</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>NaN/Inf in position</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>Gradient norm explosion</td>
+<td>‖∇f‖ &gt; 1e8</td>
+</tr>
+<tr>
+<td>Function value explosion</td>
+<td>|f| &gt; 1e20</td>
+</tr>
+<tr>
+<td>Step size collapse</td>
+<td>0 &lt; α &lt; 1e-16</td>
+</tr>
+<tr>
+<td>Invalid step size</td>
+<td>α ≤ 0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-server-endpoints-serverjl">4.2 Server Endpoints (server.jl)</h3>
+<h4 id="get-optimize">GET /optimize</h4>
+<p><strong>Purpose</strong>: Run complete optimization workflow</p>
+<p><strong>Query Parameters</strong>:</p>
+<ul>
+<li><code>function</code> - Function name (rosenbrock, custom, etc.)</li>
+<li><code>custom_formula</code> - Julia expression if custom function</li>
+<li><code>method</code> - Optimizer (sd, cg, newton, dfp, bfgs, lbfgs)</li>
+<li><code>cg_variant</code> - CG variant (FR, PR, PR_plus)</li>
+<li><code>m</code> - LBFGS memory size</li>
+<li><code>linesearch</code> - Line search (backtracking, gss, dichotomous, quadratic, brent)</li>
+<li><code>auto_bracket</code> - Boolean for automatic bracketing</li>
+<li><code>bracket_a</code>, <code>bracket_b</code> - Manual bracket interval</li>
+<li><code>x0</code> - Starting point (comma-separated)</li>
+<li><code>dim_x</code>, <code>dim_y</code> - Dimensions for 2D visualization</li>
+<li><code>term_criterion</code> - Termination criterion (gradient, step_size, f_abs, f_rel)</li>
+<li><code>tol</code> - Tolerance value</li>
+<li><code>max_iter</code> - Maximum iterations</li>
+</ul>
+<p><strong>Example Response</strong> (Success case):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"status"</span>: <span class="hljs-string">"success"</span>,
+  <span class="hljs-attr">"iterations"</span>: <span class="hljs-number">47</span>,
+  <span class="hljs-attr">"x_hist"</span>: [<span class="hljs-number">-1.0</span>, <span class="hljs-number">-0.95</span>, ..., <span class="hljs-number">1.0</span>],
+  <span class="hljs-attr">"y_hist"</span>: [<span class="hljs-number">0.0</span>, <span class="hljs-number">-0.05</span>, ..., <span class="hljs-number">1.0</span>],
+  <span class="hljs-attr">"full_x_hist"</span>: [[<span class="hljs-number">-1</span>, <span class="hljs-number">0</span>], [<span class="hljs-number">-0.95</span>, <span class="hljs-number">-0.05</span>], ..., [<span class="hljs-number">1</span>, <span class="hljs-number">1</span>]],
+  <span class="hljs-attr">"f_hist"</span>: [<span class="hljs-number">24.01</span>, <span class="hljs-number">20.3</span>, ..., <span class="hljs-number">1.2e-6</span>],
+  <span class="hljs-attr">"grad_norm_hist"</span>: [<span class="hljs-number">24.2</span>, <span class="hljs-number">19.1</span>, ..., <span class="hljs-number">8.3e-5</span>],
+  <span class="hljs-attr">"alpha_hist"</span>: [<span class="hljs-number">1.0</span>, <span class="hljs-number">0.8</span>, <span class="hljs-number">0.9</span>, ..., <span class="hljs-number">0.05</span>],
+  <span class="hljs-attr">"step_dist_hist"</span>: [<span class="hljs-number">0.05</span>, <span class="hljs-number">0.08</span>, ..., <span class="hljs-number">0.001</span>],
+  <span class="hljs-attr">"contour_x"</span>: [<span class="hljs-number">-2</span>, <span class="hljs-number">-1.95</span>, ..., <span class="hljs-number">2</span>],
+  <span class="hljs-attr">"contour_y"</span>: [<span class="hljs-number">-1</span>, <span class="hljs-number">-0.95</span>, ..., <span class="hljs-number">3</span>],
+  <span class="hljs-attr">"contour_z"</span>: [[<span class="hljs-number">24.01</span>, <span class="hljs-number">23.2</span>, ...], [...], ...],
+  <span class="hljs-attr">"true_min_full"</span>: [<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>],
+  <span class="hljs-attr">"true_min_f"</span>: <span class="hljs-number">0.0</span>,
+  <span class="hljs-attr">"diverged"</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">"divergence_reason"</span>: <span class="hljs-string">"Success"</span>,
+  <span class="hljs-attr">"divergence_iteration"</span>: <span class="hljs-number">0</span>,
+  <span class="hljs-attr">"final_grad_norm"</span>: <span class="hljs-number">8.3e-5</span>,
+  <span class="hljs-attr">"final_f_value"</span>: <span class="hljs-number">1.2e-6</span>
+}
+</div></code></pre>
+<p><strong>Example Response</strong> (Divergence case):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"status"</span>: <span class="hljs-string">"diverged"</span>,
+  <span class="hljs-attr">"iterations"</span>: <span class="hljs-number">128</span>,
+  <span class="hljs-attr">"diverged"</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">"divergence_reason"</span>: <span class="hljs-string">"Gradient norm explosion (||∇f||=1.2e8)"</span>,
+  <span class="hljs-attr">"divergence_iteration"</span>: <span class="hljs-number">128</span>,
+  <span class="hljs-attr">"final_grad_norm"</span>: <span class="hljs-number">1.2e8</span>,
+  <span class="hljs-attr">"final_f_value"</span>: <span class="hljs-number">5.4e19</span>
+}
+</div></code></pre>
+<p><strong>Example Response</strong> (Error case):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"status"</span>: <span class="hljs-string">"error"</span>,
+  <span class="hljs-attr">"message"</span>: <span class="hljs-string">"Function Error: DomainError(-0.5, sqrt will only return a complex result if called with a complex argument)"</span>
+}
+</div></code></pre>
+<h4 id="get-contours">GET /contours</h4>
+<p><strong>Purpose</strong>: Generate contour grid for 2D visualization</p>
+<p><strong>Query Parameters</strong>:</p>
+<ul>
+<li><code>function</code> - Function name (rosenbrock, ackley, custom, etc.)</li>
+<li><code>custom_formula</code> - Julia expression if custom function</li>
+<li><code>xmin</code>, <code>xmax</code>, <code>ymin</code>, <code>ymax</code> - Plot bounds</li>
+<li><code>dim_x</code>, <code>dim_y</code> - Dimensions to slice</li>
+<li><code>x0</code> - Base coordinates for other dimensions</li>
+</ul>
+<p><strong>Example Response</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"contour_x"</span>: [<span class="hljs-number">-2</span>, <span class="hljs-number">-1.973</span>, <span class="hljs-number">-1.946</span>, ..., <span class="hljs-number">2</span>],
+  <span class="hljs-attr">"contour_y"</span>: [<span class="hljs-number">-1</span>, <span class="hljs-number">-0.974</span>, <span class="hljs-number">-0.948</span>, ..., <span class="hljs-number">3</span>],
+  <span class="hljs-attr">"contour_z"</span>: [
+    [<span class="hljs-number">24.01</span>, <span class="hljs-number">21.3</span>, <span class="hljs-number">18.2</span>, ..., <span class="hljs-literal">null</span>],
+    [<span class="hljs-number">23.5</span>, <span class="hljs-number">20.8</span>, <span class="hljs-number">17.6</span>, ..., <span class="hljs-literal">null</span>],
+    ...
+  ]
+}
+</div></code></pre>
+<p><strong>Grid Strategy</strong>: 150×150 evaluation points with silent error handling for domain violations (NaN/Inf values replaced with <code>null</code>).</p>
+<h4 id="function-dispatch-serverjl">Function Dispatch (server.jl)</h4>
+<pre class="hljs"><code><div><span class="hljs-keyword">function</span> get_function_objects(selected_function, custom_formula, x0)
+    <span class="hljs-comment"># Returns tuple: (f, ∇f, Hf, error_message)</span>
+    
+    <span class="hljs-keyword">if</span> selected_function == <span class="hljs-string">"custom"</span>
+        <span class="hljs-comment"># Parse, compile, and differentiate user expression</span>
+        f = eval(Meta.parse(formula))
+        ∇f = x -&gt; ForwardDiff.gradient(f, x)
+        Hf = x -&gt; ForwardDiff.hessian(f, x)
+        
+    <span class="hljs-keyword">elseif</span> selected_function <span class="hljs-keyword">in</span> predefined_functions
+        <span class="hljs-comment"># Return precomputed analytical functions</span>
+        ...
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<hr>
+<h2 id="5-frontend-system">5. Frontend System</h2>
+<h3 id="51-html-structure-indexhtml">5.1 HTML Structure (index.html)</h3>
+<p>The UI is organized into logical panels:</p>
+<h4 id="input-panel">Input Panel</h4>
+<ul>
+<li><strong>Function Selection</strong>: Dropdown with 10 built-in + custom option</li>
+<li><strong>Custom Formula Input</strong>: Text field with syntax guide</li>
+<li><strong>Dimensions</strong>: N from 2 to 10</li>
+<li><strong>Starting Points</strong>: User-defined x₀ inputs</li>
+<li><strong>2D Plot Configuration</strong>: Axis selection and equal-axes checkbox</li>
+</ul>
+<h4 id="algorithm-configuration-panel">Algorithm Configuration Panel</h4>
+<ul>
+<li><strong>Optimization Method</strong>: 6 choices with variants</li>
+<li><strong>Line Search Method</strong>: 5 choices with bracketing options</li>
+<li><strong>Termination Criteria</strong>: 4 criteria types</li>
+<li><strong>Algorithm Parameters</strong>: Tolerance ε and max iterations k_max</li>
+</ul>
+<h4 id="results-display">Results Display</h4>
+<ul>
+<li><strong>Main Contour Plot</strong>: Interactive 2D visualization with trajectory</li>
+<li><strong>Evolution Plots</strong>: 2×2 grid showing:
+<ul>
+<li>Function value: f(x_k)</li>
+<li>Gradient norm: ‖∇f(x_k)‖</li>
+<li>Step size: α_k</li>
+<li>Step distance: ‖x_{k+1} - x_k‖</li>
+</ul>
+</li>
+</ul>
+<h4 id="modal-dialogs">Modal Dialogs</h4>
+<ul>
+<li><strong>Info Modal</strong>: Function formulas, syntax guides, termination criteria</li>
+<li><strong>Preview Modal</strong>: LaTeX rendering of custom functions before running</li>
+<li><strong>Enlarge Modal</strong>: Full-screen plot expansion</li>
+</ul>
+<h3 id="52-javascript-application-appjs">5.2 JavaScript Application (app.js)</h3>
+<h4 id="state-management">State Management</h4>
+<pre class="hljs"><code><div><span class="hljs-comment">// Global state variables</span>
+<span class="hljs-keyword">const</span> functionSelect = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'functionSelect'</span>);
+<span class="hljs-keyword">const</span> methodSelect = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'methodSelect'</span>);
+<span class="hljs-keyword">const</span> lsSelect = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'lsSelect'</span>);
+<span class="hljs-keyword">const</span> dimInput = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'dimInput'</span>);
+
+<span class="hljs-comment">// Server interaction</span>
+<span class="hljs-keyword">const</span> API_BASE_URL = <span class="hljs-string">"https://optimization-app-wkcn.onrender.com"</span>;
+<span class="hljs-keyword">let</span> lastServerInteraction = <span class="hljs-number">0</span>;  <span class="hljs-comment">// Cold start detection</span>
+</div></code></pre>
+<h4 id="event-listeners">Event Listeners</h4>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Handler</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Function change</td>
+<td><code>updateDimensions()</code></td>
+<td>Update UI for selected function</td>
+</tr>
+<tr>
+<td>Dimension change</td>
+<td><code>updateDimensions()</code></td>
+<td>Generate x₀ inputs</td>
+</tr>
+<tr>
+<td>Method change</td>
+<td>Show/hide variants</td>
+<td>Conditional UI rendering</td>
+</tr>
+<tr>
+<td>Plot pan/zoom</td>
+<td><code>fetchNewContours()</code></td>
+<td>Update contours dynamically</td>
+</tr>
+<tr>
+<td>Run button</td>
+<td><code>runOptimization()</code></td>
+<td>Execute optimization request</td>
+</tr>
+</tbody>
+</table>
+<h4 id="key-functions">Key Functions</h4>
+<p><strong><code>updateDimensions()</code></strong></p>
+<ul>
+<li>Detects if function is 2D-only</li>
+<li>Sets dimension constraints</li>
+<li>Generates dimension-dependent UI elements</li>
+</ul>
+<p><strong><code>drawInitialPlot()</code></strong></p>
+<ul>
+<li>Fetches initial contour grid</li>
+<li>Creates Plotly contour trace</li>
+<li>Attaches relayout listener for dynamic updates</li>
+</ul>
+<p><strong><code>runOptimization()</code></strong></p>
+<ul>
+<li>Validates inputs</li>
+<li>Constructs query URL with all parameters</li>
+<li>Shows loading overlay (with cold-start detection)</li>
+<li>Calls <code>/optimize</code> endpoint</li>
+<li>Processes response and renders visualizations</li>
+</ul>
+<p><strong><code>juliaToLatex(formula)</code></strong></p>
+<ul>
+<li>Converts Julia syntax to LaTeX for display</li>
+<li>Handles:
+<ul>
+<li>Array indexing: <code>x[1]</code> → <code>x₁</code></li>
+<li>Operators: <code>*</code> → <code>·</code>, <code>^</code> preserved</li>
+<li>Functions: <code>sin()</code>, <code>cos()</code>, etc.</li>
+</ul>
+</li>
+</ul>
+<h4 id="cold-start-handling">Cold Start Handling</h4>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">showLoading</span>(<span class="hljs-params">baseText</span>) </span>{
+    <span class="hljs-keyword">const</span> timeSinceLastInteraction = <span class="hljs-built_in">Date</span>.now() - lastServerInteraction;
+    
+    <span class="hljs-keyword">if</span> (timeSinceLastInteraction &gt; <span class="hljs-number">600000</span>) {  <span class="hljs-comment">// &gt; 10 minutes</span>
+        <span class="hljs-comment">// After 3.5 seconds, show server wake-up message</span>
+        coldStartTimer = setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+            loadingText.innerHTML = <span class="hljs-string">`<span class="hljs-subst">${baseText}</span>&lt;br&gt;&lt;br&gt;
+                ☕ Waking up the server... This may take up to 2 minutes.
+                Subsequent requests will be instant!`</span>;
+        }, <span class="hljs-number">3500</span>);
+    }
+}
+</div></code></pre>
+<h4 id="modal-dialogs">Modal Dialogs</h4>
+<p><strong>Info Modal Content</strong> (<code>modalContent</code> object):</p>
+<ul>
+<li><strong>Function Information</strong>: Formulas, global minima, references</li>
+<li><strong>Termination Criteria</strong>: Mathematical definitions and usage</li>
+</ul>
+<p><strong>Plotly Configuration</strong>:</p>
+<ul>
+<li>SVG export enabled for all plots</li>
+<li>Responsive sizing with custom margins</li>
+<li>Logarithmic Y-axis support for evolution plots</li>
+</ul>
+<h3 id="53-styling-stylecss">5.3 Styling (style.css)</h3>
+<h4 id="layout-system">Layout System</h4>
+<ul>
+<li><strong>Flexbox-based</strong> responsive grid</li>
+<li><strong>2-column layout</strong> on desktop, single-column on mobile</li>
+<li><strong>Grid layout</strong> for 2×2 plot cards</li>
+</ul>
+<h4 id="visual-components">Visual Components</h4>
+<ul>
+<li><strong>Panels</strong>: <code>#f9f9f9</code> background with subtle borders</li>
+<li><strong>Buttons</strong>: Microsoft Fluent Design (blue #0078D7)</li>
+<li><strong>Alerts</strong>: Warning boxes with color coding</li>
+<li><strong>Loading</strong>: CSS animation spinner with overlay</li>
+<li><strong>Formulas</strong>: Monospace code blocks with syntax highlighting</li>
+</ul>
+<hr>
+<h2 id="6-optimization-algorithms">6. Optimization Algorithms</h2>
+<h3 id="61-steepest-descent-steepestdescentjl">6.1 Steepest Descent (SteepestDescent.jl)</h3>
+<p><strong>Type</strong>: First-order method<br>
+<strong>Convergence Rate</strong>: Linear (slow)<br>
+<strong>Memory</strong>: O(n)</p>
+<p><strong>Algorithm</strong>:</p>
+<pre class="hljs"><code><div>1. Initialize x₀
+2. FOR k = 0, 1, 2, ...
+   - d_k = -∇f(x_k)  [negative gradient]
+   - α_k = LineSearch(f, ∇f, x_k, d_k)
+   - x_{k+1} = x_k + α_k·d_k
+   - Check termination criteria
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Guaranteed descent at each step</li>
+<li>✅ Simple and robust</li>
+<li>❌ Poor performance on ill-conditioned problems (zigzag behavior)</li>
+<li>❌ Linear convergence rate</li>
+</ul>
+<p><strong>Best for</strong>: Convex functions, educational purposes</p>
+<hr>
+<h3 id="62-conjugate-gradient-conjugategradientjl">6.2 Conjugate Gradient (ConjugateGradient.jl)</h3>
+<p><strong>Type</strong>: First-order method with memory<br>
+<strong>Convergence Rate</strong>: Superlinear (for quadratic: finite termination in n steps)<br>
+<strong>Memory</strong>: O(n)</p>
+<p><strong>Variants Available</strong>:</p>
+<h4 id="fletcher-reeves-fr">Fletcher-Reeves (FR)</h4>
+<p>$$\beta_k^{\text{FR}} = \frac{\langle \nabla f(x_k), \nabla f(x_k) \rangle}{\langle \nabla f(x_{k-1}), \nabla f(x_{k-1}) \rangle}$$</p>
+<p><strong>Characteristics</strong>: Theoretically stable, may have slower convergence</p>
+<h4 id="polak-ribi%C3%A8re-pr">Polak-Ribière (PR)</h4>
+<p>$$\beta_k^{\text{PR}} = \frac{\langle \nabla f(x_k) - \nabla f(x_{k-1}), \nabla f(x_k) \rangle}{\langle \nabla f(x_{k-1}), \nabla f(x_{k-1}) \rangle}$$</p>
+<p><strong>Characteristics</strong>: Often faster in practice, can diverge on non-convex</p>
+<h4 id="polak-ribi%C3%A8re-pr---default">Polak-Ribière+ (PR+) - <em>Default</em></h4>
+<p>$$\beta_k^{\text{PR+}} = \max(0, \beta_k^{\text{PR}})$$</p>
+<p><strong>Characteristics</strong>: Hybrid approach combining stability of FR with speed of PR</p>
+<p><strong>Algorithm (General Schema)</strong>:</p>
+<p>The specific implementation varies by optimizer, but follows this general pattern:</p>
+<ol>
+<li>Initialize position x_k and gradient ∇f_k</li>
+<li>Compute search direction (descent direction)</li>
+<li>Perform line search to find step size α_k</li>
+<li>Update position and gradient</li>
+<li>Update method-specific state (Hessian approximations, conjugacy coefficients, etc.)</li>
+<li>Repeat until convergence</li>
+</ol>
+<p><strong>Best for</strong>: Medium-scale problems, limited Hessian information</p>
+<hr>
+<h3 id="63-newtons-method-newtonmethodjl">6.3 Newton's Method (NewtonMethod.jl)</h3>
+<p><strong>Type</strong>: Second-order method (exact Hessian)<br>
+<strong>Convergence Rate</strong>: Quadratic (near optimum)<br>
+<strong>Memory</strong>: O(n²) for Hessian storage</p>
+<p><strong>Implementation Details</strong>:</p>
+<ul>
+<li>Requires computing the Hessian matrix ∇²f(x) at each iteration</li>
+<li>In this implementation, Hessian is computed analytically via <code>ForwardDiff.hessian()</code></li>
+<li>Uses line search (damping) for global convergence guarantee</li>
+<li>Without damping, Newton's method can diverge on non-convex problems</li>
+<li>Newton direction is computed implicitly through the line search</li>
+<li>Very accurate direction (2nd-order curvature information)</li>
+<li><strong>Damping</strong>: Uses line search to ensure descent (prevents divergence)</li>
+<li><strong>Hessian Computation</strong>: Via <code>ForwardDiff.hessian()</code></li>
+<li><strong>Direction Solving</strong>: Not explicitly shown (implicit via multiply)</li>
+</ul>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Quadratic convergence (very fast near optimum)</li>
+<li>✅ Precise direction (2nd-order curvature info)</li>
+<li>❌ Requires computing and inverting n×n Hessian (O(n³))</li>
+<li>❌ Can diverge on non-convex functions without damping</li>
+<li>❌ Expensive Hessian computation</li>
+</ul>
+<p><strong>Best for</strong>: Small-dimensional problems (&lt;100 vars), well-conditioned</p>
+<hr>
+<h3 id="64-quasi-newton-methods">6.4 Quasi-Newton Methods</h3>
+<h4 id="dfp-davidon-fletcher-powell-dfpjl">DFP (Davidon-Fletcher-Powell) (DFP.jl)</h4>
+<p><strong>Type</strong>: Quasi-Newton (approximate Hessian)<br>
+<strong>Convergence Rate</strong>: Superlinear<br>
+<strong>Memory</strong>: O(n²)</p>
+<p><strong>Update Formula</strong>:</p>
+<p>$$W_{k+1} = W_k + \frac{s_k s_k^T}{\langle s_k, y_k \rangle} - \frac{W_k y_k y_k^T W_k}{\langle y_k, W_k y_k \rangle}$$</p>
+<p>where:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>\(W_k\)</td>
+<td>inverse Hessian approximation</td>
+</tr>
+<tr>
+<td>\(s_k = x_{k+1} - x_k\)</td>
+<td>step</td>
+</tr>
+<tr>
+<td>\(y_k = \nabla f(x_{k+1}) - \nabla f(x_k)\)</td>
+<td>gradient difference</td>
+</tr>
+<tr>
+<td>\(\langle \cdot, \cdot \rangle\)</td>
+<td>inner product</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implementation</strong> (from DFP.jl):</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">function</span> update_approximation!(method::DFPMethod, state::OptimizationState, s, y)
+    W = state.inverse_hessian
+    ys = dot(y, s)
+    yWy = dot(y, W * y)
+    
+    <span class="hljs-keyword">if</span> ys &gt; <span class="hljs-number">1e-10</span>  <span class="hljs-comment"># Strict curvature condition</span>
+        term1 = (W * y * transpose(y) * W) / yWy
+        term2 = (s * transpose(s)) / ys
+        state.inverse_hessian = W - term1 + term2
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Superlinear convergence</li>
+<li>✅ Only needs gradients (not Hessians)</li>
+<li>✅ Stable on well-conditioned problems</li>
+<li>❌ Can be less robust than BFGS</li>
+<li>❌ Still O(n²) memory</li>
+</ul>
+<h4 id="bfgs-broyden-fletcher-goldfarb-shanno-bfgsjl">BFGS (Broyden-Fletcher-Goldfarb-Shanno) (BFGS.jl)</h4>
+<p><strong>Type</strong>: Quasi-Newton (approximate Hessian)<br>
+<strong>Convergence Rate</strong>: Superlinear<br>
+<strong>Memory</strong>: O(n²)<br>
+<strong>Stability</strong>: Better than DFP</p>
+<h4 id="bfgs-broyden-fletcher-goldfarb-shanno-bfgsjl">BFGS (Broyden-Fletcher-Goldfarb-Shanno) (BFGS.jl)</h4>
+<p><strong>Type</strong>: Quasi-Newton (approximate Hessian)<br>
+<strong>Convergence Rate</strong>: Superlinear<br>
+<strong>Memory</strong>: O(n²)<br>
+<strong>Stability</strong>: Better than DFP</p>
+<p><strong>Update Formula</strong>:</p>
+<p>$$W_{k+1} = V_k W_k V_k^T + \rho_k s_k s_k^T$$</p>
+<p>where:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>\(V_k = I - \rho_k (s_k \otimes y_k)\)</td>
+<td>outer product where \(s \otimes y = s y^T\)</td>
+</tr>
+<tr>
+<td>\(\rho_k = 1 / \langle s_k, y_k \rangle\)</td>
+<td>step-curvature ratio</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implementation</strong> (from BFGS.jl):</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">function</span> update_approximation!(method::BFGSMethod, state::OptimizationState, s, y)
+    W = state.inverse_hessian
+    ys = dot(y, s)
+    
+    <span class="hljs-keyword">if</span> ys &gt; <span class="hljs-number">1e-10</span>  <span class="hljs-comment"># Strict curvature condition</span>
+        rho = <span class="hljs-number">1.0</span> / ys
+        I_mat = <span class="hljs-built_in">Matrix</span>{<span class="hljs-built_in">Float64</span>}(<span class="hljs-literal">I</span>, n, n)
+        V = I_mat - rho * (s * transpose(y))
+        state.inverse_hessian = V * W * transpose(V) + rho * (s * transpose(s))
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Superlinear convergence</li>
+<li>✅ Only needs gradients (not Hessians)</li>
+<li>✅ More stable than DFP</li>
+<li>✅ Good balance of efficiency and accuracy</li>
+<li>❌ Still O(n²) memory</li>
+<li>✅ Preferred choice over DFP in practice</li>
+</ul>
+<p><strong>Best for</strong>: Medium-scale problems (up to ~1000 vars)</p>
+<hr>
+<h3 id="65-l-bfgs-limited-memory-bfgs-lbfgsjl">6.5 L-BFGS (Limited-Memory BFGS) (LBFGS.jl)</h3>
+<p><strong>Type</strong>: Quasi-Newton with limited memory<br>
+<strong>Convergence Rate</strong>: Superlinear<br>
+<strong>Memory</strong>: O(m·n) where m &lt;&lt; n (typically m=5-20)</p>
+<p><strong>Direction Computation</strong> (Two-Loop Recursion):</p>
+<p>The Hessian approximation is not stored explicitly. Instead, the direction is computed on-the-fly from m recent {s, y} pairs:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Forward loop: accumulate approximation</span>
+q = ∇f(x_k)
+<span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k-m, ..., k-<span class="hljs-number">1</span>]
+    α_i = ρ_i * ⟨s_i, q⟩
+    q = q - α_i * y_i
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Diagonal scaling</span>
+q = <span class="hljs-literal">γ</span> * q  <span class="hljs-keyword">where</span> <span class="hljs-literal">γ</span> = ⟨s_{k-<span class="hljs-number">1</span>}, y_{k-<span class="hljs-number">1</span>}⟩ / ⟨y_{k-<span class="hljs-number">1</span>}, y_{k-<span class="hljs-number">1</span>}⟩
+
+<span class="hljs-comment"># Backward loop: construct product</span>
+<span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k-<span class="hljs-number">1</span>, ..., k-m]
+    β_i = ρ_i * ⟨y_i, q⟩
+    q = q + (α_i - β_i) * s_i
+<span class="hljs-keyword">end</span>
+
+d_k = -q
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ O(m·n) memory (vs O(n²) for BFGS)</li>
+<li>✅ Superlinear convergence</li>
+<li>✅ Handles large-scale problems well</li>
+<li>✅ Ground truth in our app: <code>Optim.jl</code> attempts L-BFGS first (if it fails, we fall back to Nelder-Mead)</li>
+<li>❌ Slightly slower convergence than full BFGS with small m</li>
+<li>❌ Less curvature information with very small m values</li>
+</ul>
+<p><strong>Best for</strong>: Large-scale problems (&gt;1000 vars)</p>
+<hr>
+<h2 id="7-line-search-methods">7. Line Search Methods</h2>
+<p>All line search methods solve the 1D minimization problem:
+$$\alpha^* = \arg\min_{\alpha &gt; 0} f(x_k + \alpha \cdot d_k)$$</p>
+<h3 id="71-backtracking-inexact-backtrackingjl">7.1 Backtracking (Inexact) (Backtracking.jl)</h3>
+<p><strong>Type</strong>: Inexact, uses Armijo condition<br>
+<strong>Computational Cost</strong>: Very low<br>
+<strong>Accuracy</strong>: Moderate</p>
+<p><strong>Armijo Condition</strong>:
+$$f(x + \alpha d) \leq f(x) + \beta \cdot \alpha \cdot \nabla f(x)^T d$$</p>
+<p>where \(\beta \in (0, 1)\) (typically 1e-4)</p>
+<p><strong>Algorithm</strong>:</p>
+<pre class="hljs"><code><div>1. Start with α = 1.0
+2. WHILE not (Armijo condition satisfied)
+   - α ← p·α  (contraction, p ≈ 0.5)
+3. RETURN α
+</div></code></pre>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>p = 0.5</code> (contraction factor)</li>
+<li><code>beta = 1e-4</code> (sufficient decrease)</li>
+</ul>
+<p><strong>Implementation</strong> (from Backtracking.jl):</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">struct</span> Backtracking &lt;: AbstractLineSearch
+    p::<span class="hljs-built_in">Float64</span>         <span class="hljs-comment"># Contraction factor</span>
+    beta::<span class="hljs-built_in">Float64</span>      <span class="hljs-comment"># Armijo parameter</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">function</span> compute_step_size(ls::Backtracking, f, ∇f, state, d)
+    alpha = <span class="hljs-number">1.0</span>
+    y_val = f(state.x)
+    g = state.gradient
+    
+    <span class="hljs-keyword">while</span> f(state.x + alpha * d) &gt; y_val + ls.beta * alpha * dot(g, d)
+        alpha *= ls.p
+    <span class="hljs-keyword">end</span>
+    
+    <span class="hljs-keyword">return</span> alpha
+<span class="hljs-keyword">end</span>
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Fastest (few function evaluations)</li>
+<li>✅ Guaranteed to find acceptable step</li>
+<li>✅ Works with any descent direction</li>
+<li>❌ Not highly accurate</li>
+<li>❌ May require many optimizer iterations</li>
+</ul>
+<p><strong>Best for</strong>: Quick iterations, when accuracy not critical</p>
+<hr>
+<h3 id="72-golden-section-search-exact-goldensectionsearchjl">7.2 Golden Section Search (Exact) (GoldenSectionSearch.jl)</h3>
+<p><strong>Type</strong>: Exact bracket-based method<br>
+<strong>Convergence Rate</strong>: linear with a rate of 1/τ ≈ 0.618</p>
+<p><strong>Golden Ratio</strong>: \(\phi = \frac{1 + \sqrt{5}}{2} \approx 1.618\)</p>
+<p><strong>Algorithm</strong> (assumes bracket [a, b]):</p>
+<pre class="hljs"><code><div>1. Initialize: [c, d] subdivision points
+2. REPEAT until (b - a) &lt; ε
+   - Evaluate f(c) and f(d)
+   - If f(c) &lt; f(d)
+     b ← d, d ← c, c ← a + (1-τ)·(b-a)
+   - Else
+     a ← c, c ← d, d ← a + τ·(b-a)
+   where τ = 2 - φ ≈ 0.381
+3. RETURN α = (a+b)/2
+</div></code></pre>
+<p><strong>Bracketing</strong> (if auto-bracket enabled):</p>
+<ol>
+<li>Start with α₀ = 1.0</li>
+<li>Expand exponentially until bracketing triplet (a, b, c) found</li>
+<li>Refine bracket with golden section</li>
+</ol>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Highly accurate result</li>
+<li>✅ Deterministic behavior</li>
+<li>✅ Works on unimodal intervals</li>
+<li>❌ Requires valid bracket</li>
+<li>❌ More function evaluations than backtracking</li>
+</ul>
+<p><strong>Best for</strong>: When line search accuracy matters</p>
+<hr>
+<h3 id="73-dichotomous-search-exact-dichotomoussearchjl">7.3 Dichotomous Search (Exact) (DichotomousSearch.jl)</h3>
+<p><strong>Type</strong>: Exact bracket-based method<br>
+<strong>Convergence Rate</strong>: Linear with rate of 0.5</p>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>tol</code> - Target interval width (default: 1e-4)</li>
+<li><code>delta</code> - Distinguishability constant for discriminating between nearby points (default: 1e-5)</li>
+</ul>
+<p><strong>Algorithm</strong> (assumes bracket [a, b]):</p>
+<pre class="hljs"><code><div>1. WHILE (b - a) &gt; tol
+   - mid ← (a + b) / 2
+   - x_minus ← mid - delta
+   - x_plus ← mid + delta
+   - IF f(x_minus) &lt; f(x_plus)
+     b ← x_plus
+   - ELSE
+     a ← x_minus
+2. RETURN α ← (a + b) / 2
+</div></code></pre>
+<p><strong>Implementation Note</strong>: The <code>delta</code> parameter (distinguishability constant) is crucial for numerical stability. It prevents the algorithm from trying to discriminate between points that are too close given floating-point precision.</p>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Simpler than golden section search</li>
+<li>✅ Reliable bracketing approach</li>
+<li>✅ Systematic interval halving</li>
+<li>✅ Supports custom distinguishability parameter</li>
+<li>❌ Slower convergence than golden section search</li>
+<li>❌ Requires careful tuning of <code>delta</code> to avoid numerical issues</li>
+</ul>
+<p><strong>Best for</strong>: Reliable, methodical search with custom precision control</p>
+<hr>
+<h3 id="74-quadratic-fit-search-exact-quadraticfitsearchjl">7.4 Quadratic Fit Search (Exact) (QuadraticFitSearch.jl)</h3>
+<p><strong>Type</strong>: Exact model-based method<br>
+<strong>Convergence Rate</strong>: Superlinear (fast when model is accurate)<br>
+<strong>Function Evaluations</strong>: Few (typically 5-10)</p>
+<p><strong>Algorithm</strong> (assumes bracket [a, c]):</p>
+<pre class="hljs"><code><div>1. Evaluate f at three points: a, b=(a+c)/2, c (bracketing triplet)
+2. FOR iteration = 1 to max_iter
+   - Fit quadratic parabola q(α) through the three points
+   - Analytically minimize: α_min from 3-point Lagrange formula
+   - Evaluate f(α_min)
+   - IF |α_min - α_old| &lt; tol
+      RETURN α_min
+   - UPDATE three points:
+      Keep the two closest to minimum
+      Maintain bracket structure
+3. RETURN best α found
+</div></code></pre>
+<p><strong>Implementation Details</strong> (from QuadraticFitSearch.jl):</p>
+<ul>
+<li>Uses Lagrange interpolation to fit quadratic through three points</li>
+<li>Numerator and denominator computed from formula, with safeguard against collinearity</li>
+<li>Automatic fallback if denominator becomes too small</li>
+</ul>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Very fast convergence on smooth functions</li>
+<li>✅ Uses function curvature information</li>
+<li>✅ Often fewer evaluations than golden section search</li>
+<li>✅ Deterministic behavior</li>
+<li>❌ Can fail if quadratic model is poor</li>
+<li>❌ Can search for maximum instead of minimum</li>
+</ul>
+<p><strong>Best for</strong>: Smooth functions with clear quadratic structure</p>
+<hr>
+<h3 id="75-brents-method-exact-brentsmethodjl">7.5 Brent's Method (Exact) (BrentsMethod.jl)</h3>
+<p><strong>Type</strong>: Exact hybrid method<br>
+<strong>Convergence Rate</strong>: Superlinear</p>
+<p><strong>Algorithm</strong> (assumes bracket [a,b])</p>
+<pre class="hljs"><code><div>1. Initialize: x, w, v ← a + 0.3819660·(b-a)  [golden ratio location]
+              fx, fw, fv ← f(x)
+              d_step, e ← 0  [previous step magnitudes]
+
+2. FOR iteration = 1 to max_iter
+   - mid ← (a+b)/2
+   - tol1 ← tol·|x| + 1e-10
+   - tol2 ← 2·tol1
+   
+   - IF |x - mid| ≤ (tol2 - (b-a)/2)
+     RETURN x  [Interval sufficiently small]
+   
+   - IF |e| &gt; tol1
+     Try PARABOLIC FIT:
+       - Compute p, q from (x,w), (x,v) points
+       - Check if acceptable (within bounds, etc.)
+       - IF acceptable: d_step ← p/q
+       - ELSE: Fall back to GOLDEN SECTION step
+   - ELSE
+     Execute GOLDEN SECTION step
+   
+   - Take step: α_new ← x + d_step
+   - Evaluate f(α_new)
+   - Update {x, w, v} and corresponding f-values
+     maintaining bracket and ordering
+
+3. RETURN x
+</div></code></pre>
+<p><strong>Algorithm Details</strong>:</p>
+<ul>
+<li><strong>Parabolic/Inverse Quadratic Fit</strong>: Fast convergence when function is smooth</li>
+<li><strong>Golden Section Fallback</strong>: Used if parabolic step is rejected (e.g., goes outside bracket)</li>
+<li><strong>Bracketing Guarantee</strong>: Always maintains interval [a,b] containing the optimum</li>
+<li><strong>Numerical Safeguards</strong>: Checks for collinearity, bounds violations, and step size validity</li>
+</ul>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Fastest practical method available</li>
+<li>✅ Combines speed of interpolation with safety of golden section</li>
+<li>✅ Robust and reliable on difficult functions</li>
+<li>✅ Maintains bracketing invariant</li>
+<li>✅ Industry standard (used in scipy.optimize, Optim.jl)</li>
+<li>❌ More complex implementation</li>
+</ul>
+<p><strong>Best for</strong>: Production-quality code when robustness and speed both matter</p>
+<hr>
+<h3 id="76-auto-bracketing">7.6 Auto Bracketing</h3>
+<p><strong>Purpose</strong>: Automatically find initial bracket [a, b] for exact line searches</p>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li><code>initial_step</code> - Starting step size for first evaluation (default: 1e-4)</li>
+<li><code>expansion</code> - Multiplicative factor for bracket expansion (default: 2.0)</li>
+<li><code>max_iter</code> - Maximum iterations to find bracket (default: 50)</li>
+</ul>
+<p><strong>Algorithm</strong> (from Bracketing.jl):</p>
+<pre class="hljs"><code><div>1. Start at: a ← 0,  b ← a + initial_step
+2. Evaluate: f(a), f(b)
+
+3. IF f(b) &gt; f(a)
+     Return bracket [a, b] (minimum already bracketed)
+   ELSE
+     Continue expanding
+
+4. c ← b + expansion·(b - a)  [Initial expansion point]
+5. FOR iteration = 1 to max_iter
+   - Evaluate f(c)
+   - IF f(c) &gt; f(b)
+     Return bracket [a, c]  [Bracket found!]
+   - ELSE
+     Continue expanding:
+     a ← b, b ← c
+     c ← b + expansion·(b - a)
+
+6. Return last bracket [a, c]
+</div></code></pre>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>✅ Automatically finds valid bracket for exact line searches</li>
+<li>✅ Handles cases where initial step is too large or too small</li>
+<li>✅ No user configuration needed (when using defaults)</li>
+<li>❌ Can fail if function is monotone (no local minimum in direction)</li>
+<li>❌ May expand far from starting point on flat functions</li>
+</ul>
+<p><strong>Best for</strong>: Automatic bracket initialization (default for exact line searches)</p>
+<hr>
+<h2 id="8-test-functions">8. Test Functions</h2>
+<h3 id="81-n-dimensional-functions">8.1 N-Dimensional Functions</h3>
+<h4 id="rosenbrock-predefined-analytical">Rosenbrock (Predefined Analytical)</h4>
+<p>$$f(\mathbf{x}) = \sum_{i=1}^{n-1} \left[ 100(x_{i+1} - x_i^2)^2 + (1 - x_i)^2 \right]$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(\mathbf{1}) = 0\)</li>
+<li><strong>Characteristics</strong>: Long, narrow, parabolic valley</li>
+<li><strong>Default x₀</strong>: \((-1, 0, 0, ..., 0)\)</li>
+</ul>
+<h4 id="ackley-via-forwarddiff">Ackley (Via ForwardDiff)</h4>
+<p>$$f(\mathbf{x}) = -20\exp\left(-0.2\sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2}\right) - \exp\left(\frac{1}{d}\sum_{i=1}^d \cos(2\pi x_i)\right) + 20 + e$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(\mathbf{0}) = 0\)</li>
+<li><strong>Characteristics</strong>: Nearly flat exterior with central hole</li>
+<li><strong>Difficulty</strong>: Very hard - highly multimodal</li>
+<li><strong>Interesting Features</strong>: Many local minima, tests global optimization</li>
+<li><strong>Default x₀</strong>: \((3, 3, 3, ..., 3)\)</li>
+</ul>
+<h4 id="sphere--axis-parallel-hyper-ellipsoid-predefined-analytical">Sphere / Axis Parallel Hyper-Ellipsoid (Predefined Analytical)</h4>
+<p>$$f(\mathbf{x}) = \sum_{i=1}^{n} i \cdot x_i^2$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(\mathbf{0}) = 0\)</li>
+<li><strong>Characteristics</strong>: Strictly convex, ill-conditioned (poor scaling)</li>
+<li><strong>Difficulty</strong>: Easy - convex, but interesting due to conditioning</li>
+<li><strong>Interesting Features</strong>: Tests algorithm's handling of ill-conditioning</li>
+<li><strong>Default x₀</strong>: \((3, -4, 3, -4, ...)\) (alternating)</li>
+</ul>
+<h3 id="82-2-dimensional-functions">8.2 2-Dimensional Functions</h3>
+<h4 id="himmelblau-predefined-analytical">Himmelblau (Predefined Analytical)</h4>
+<p>$$f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2$$</p>
+<ul>
+<li><strong>Global Minima</strong>: Four identical local minima at \(f = 0\):
+<ul>
+<li>\((3.0, 2.0)\)</li>
+<li>\((-2.805, 3.131)\)</li>
+<li>\((-3.779, -3.283)\)</li>
+<li>\((3.584, -1.848)\)</li>
+</ul>
+</li>
+<li><strong>Characteristics</strong>: Multiple local minima</li>
+<li><strong>Interesting Features</strong>: Tests multimodal optimization</li>
+<li><strong>Default x₀</strong>: \((-0.27, -0.9)\)</li>
+</ul>
+<h4 id="beale-via-forwarddiff">Beale (Via ForwardDiff)</h4>
+<p>$$f(x,y) = (1.5 - x + xy)^2 + (2.25 - x + xy^2)^2 + (2.625 - x + xy^3)^2$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(3, 0.5) = 0\)</li>
+<li><strong>Characteristics</strong>: Multimodal with sharp peaks, flat valleys</li>
+<li><strong>Difficulty</strong>: Hard - requires precision</li>
+<li><strong>Interesting Features</strong>: Large flat regions test gradient magnitudes</li>
+<li><strong>Default x₀</strong>: \((-1.0, -1.0)\)</li>
+</ul>
+<h4 id="booth-predefined-analytical">Booth (Predefined Analytical)</h4>
+<p>$$f(x,y) = (x + 2y - 7)^2 + (2x + y - 5)^2$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(1, 3) = 0\)</li>
+<li><strong>Characteristics</strong>: Valley-shaped function</li>
+<li><strong>Difficulty</strong>: Medium - good test for gradient vs. Hessian methods</li>
+<li><strong>Interesting Features</strong>: Tests pure quadratic minimization</li>
+<li><strong>Default x₀</strong>: \((4, 4)\)</li>
+</ul>
+<h4 id="goldstein-price-via-forwarddiff">Goldstein-Price (Via ForwardDiff)</h4>
+<p>$$f(x,y) = [1 + (x+y+1)^2(19-14x+3x^2-14y+6xy+3y^2)] \times$$
+$$[30 + (2x-3y)^2(18-32x+12x^2+48y-36xy+27y^2)]$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(0, -1) = 3\)</li>
+<li><strong>Characteristics</strong>: Complex polynomial, many local minima</li>
+<li><strong>Difficulty</strong>: Hard - polynomial complexity</li>
+<li><strong>Interesting Features</strong>: Tests algorithm's ability to escape local minima</li>
+<li><strong>Default x₀</strong>: \((-2, -2)\)</li>
+</ul>
+<h4 id="matyas-via-forwarddiff">Matyas (Via ForwardDiff)</h4>
+<p>$$f(x,y) = 0.26(x^2 + y^2) - 0.48xy$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(0, 0) = 0\)</li>
+<li><strong>Characteristics</strong>: Plate-shaped, no local minima except global</li>
+<li><strong>Difficulty</strong>: Easy - convex</li>
+<li><strong>Interesting Features</strong>: Good for learning algorithms</li>
+<li><strong>Default x₀</strong>: \((5, 5)\)</li>
+</ul>
+<h4 id="l%C3%A9vi-n13-via-forwarddiff">Lévi N.13 (Via ForwardDiff)</h4>
+<p>$$f(x,y) = \sin^2(3\pi x) + (x-1)^2[1 + \sin^2(3\pi y)] + (y-1)^2[1 + \sin^2(2\pi y)]$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(1, 1) = 0\)</li>
+<li><strong>Characteristics</strong>: Highly multimodal due to trigonometry</li>
+<li><strong>Difficulty</strong>: Very hard - oscillating ridges</li>
+<li><strong>Interesting Features</strong>: Tests algorithms on periodic landscapes</li>
+<li><strong>Default x₀</strong>: \((3, 3)\)</li>
+</ul>
+<h4 id="three-hump-camel-via-forwarddiff">Three-Hump Camel (Via ForwardDiff)</h4>
+<p>$$f(x,y) = 2x^2 - 1.05x^4 + \frac{x^6}{6} + xy + y^2$$</p>
+<ul>
+<li><strong>Global Minimum</strong>: \(f(0, 0) = 0\)</li>
+<li><strong>Characteristics</strong>: Three local minima</li>
+<li><strong>Difficulty</strong>: Medium - multimodal</li>
+<li><strong>Interesting Features</strong>: Camel-shaped landscape</li>
+<li><strong>Default x₀</strong>: \((2, 2)\)</li>
+</ul>
+<h3 id="83-custom-functions">8.3 Custom Functions</h3>
+<p><strong>Syntax</strong>: Julia mathematical expressions with <code>x[1]</code>, <code>x[2]</code>, etc.</p>
+<p><strong>Examples</strong>:</p>
+<ul>
+<li><code>sin(x[1]) + x[2]^2</code></li>
+<li><code>0.01 * x[1]^2 + x[2]^2</code></li>
+<li><code>exp(x[1]) * cos(x[2])</code></li>
+</ul>
+<p><strong>Processing</strong>:</p>
+<ol>
+<li>URL decode formula</li>
+<li>Remove backslashes (escaping)</li>
+<li>Parse as Julia expression: <code>Meta.parse(formula)</code></li>
+<li>Compile to function: <code>eval(:(x -&gt; $expr))</code></li>
+<li>Differentiate: <code>ForwardDiff.gradient(f, x)</code></li>
+<li>Verify: evaluate at x₀</li>
+<li>Return error if any step fails</li>
+</ol>
+<hr>
+<h2 id="9-user-guide">9. User Guide</h2>
+<h3 id="91-quick-start">9.1 Quick Start</h3>
+<ol>
+<li><strong>Open Application</strong>: Navigate to deployed URL</li>
+<li><strong>Select Function</strong>: Choose from dropdown (Rosenbrock is default)</li>
+<li><strong>Set Starting Point</strong>: Modify x₀ values (defaults provided)</li>
+<li><strong>Configure Algorithm</strong>:
+<ul>
+<li>Choose method (default: Steepest Descent)</li>
+<li>Choose line search (default: Backtracking)</li>
+<li>Choose termination criterion (default: Gradient magnitude)</li>
+</ul>
+</li>
+<li><strong>Adjust Parameters</strong>:
+<ul>
+<li>Tolerance: How close to stop (default: 1e-4)</li>
+<li>Max iterations: Safety limit (default: 2000)</li>
+</ul>
+</li>
+<li><strong>Run</strong>: Click &quot;Run Optimization&quot;</li>
+<li><strong>Analyze Results</strong>: Inspect trajectory and convergence plots</li>
+</ol>
+<h3 id="92-custom-function-definition">9.2 Custom Function Definition</h3>
+<ol>
+<li>Select &quot;Custom (User Defined)&quot; from function dropdown</li>
+<li>Enter formula in Julia syntax:<pre class="hljs"><code><div>sin(x[1]) * exp(x[2]^2)
+</div></code></pre>
+</li>
+<li>Set dimensions (2 ≤ N ≤ 10)</li>
+<li>Specify starting point</li>
+<li>Click &quot;Run Optimization&quot; to preview formula</li>
+<li>Approve and run</li>
+</ol>
+<p><strong>Common Mistakes</strong>:</p>
+<ul>
+<li>❌ Using <code>|x|</code> instead of <code>abs(x[1])</code></li>
+<li>❌ Forgetting array indexing: <code>x[i]</code> not just <code>x</code></li>
+<li>❌ Implicit multiplication: <code>2 x</code> should be <code>2*x</code></li>
+<li>❌ Domains that include function singularities</li>
+</ul>
+<h3 id="93-interpreting-results">9.3 Interpreting Results</h3>
+<h4 id="main-plot">Main Plot</h4>
+<p><strong>Elements</strong>:</p>
+<ul>
+<li><strong>Contours</strong>: Function level sets (colored by value)</li>
+<li><strong>Green square</strong>: Starting point x₀</li>
+<li><strong>Blue dots</strong>: Intermediate iterations</li>
+<li><strong>Yellow star</strong>: Final converged point</li>
+<li><strong>Black X</strong>: Ground truth (Optim.jl L-BFGS or Nelder-Mead)</li>
+<li><strong>Red line</strong>: Optimization trajectory connecting points</li>
+</ul>
+<p><strong>Interactions</strong>:</p>
+<ul>
+<li><strong>Hover</strong>: Show point coordinates and function value</li>
+<li><strong>Zoom</strong>: Click and drag to zoom region</li>
+<li><strong>Pan</strong>: Hold shift while dragging to pan</li>
+<li><strong>Download</strong>: Camera icon to save as SVG</li>
+</ul>
+<h4 id="evolution-plots">Evolution Plots</h4>
+<p><strong>Function Value f(x_k)</strong>:</p>
+<ul>
+<li>✅ Should monotonically decrease</li>
+<li>❌ If increases: algorithm diverged</li>
+<li>Shape indicates convergence speed</li>
+</ul>
+<p><strong>Gradient Norm ‖∇f(x_k)‖</strong>:</p>
+<ul>
+<li>Should approach 0 (indicates convergence)</li>
+<li>Exponential decay = fast convergence</li>
+<li>Linear decay = slow convergence</li>
+<li>Plateau = stalled progress</li>
+</ul>
+<p><strong>Step Size α_k</strong>:</p>
+<ul>
+<li>Line search parameter</li>
+<li>Should generally decrease</li>
+<li>Very small α (&lt;&lt; 1e-10) indicates stalling</li>
+<li>α=1 most common with Newton</li>
+</ul>
+<p><strong>Step Distance ‖x_{k+1} - x_k‖</strong>:</p>
+<ul>
+<li>Should approach 0 at convergence</li>
+<li>Similar pattern to gradient norm</li>
+<li>Indicates how far algorithm is moving</li>
+</ul>
+<h4 id="divergence-warning">Divergence Warning</h4>
+<p>If algorithm diverges:</p>
+<ul>
+<li>Red warning box appears</li>
+<li>Shows reason (NaN, explosion, collapse)</li>
+<li>Lists iteration where divergence detected</li>
+<li>Shows final gradient norm and function value</li>
+<li>Trajectory plot still shows attempted path</li>
+</ul>
+<h3 id="94-line-search-selection-guide">9.4 Line Search Selection Guide</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Recommended</th>
+<th>Trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Speed Priority</strong></td>
+<td>Backtracking</td>
+<td>Few evals, less accurate</td>
+</tr>
+<tr>
+<td><strong>Accuracy Priority</strong></td>
+<td>Brent's Method</td>
+<td>More evals, high precision</td>
+</tr>
+<tr>
+<td><strong>Safety/Reliability</strong></td>
+<td>Golden Section</td>
+<td>Deterministic, moderate speed</td>
+</tr>
+<tr>
+<td><strong>Production Code</strong></td>
+<td>Brent's Method</td>
+<td>Industry standard</td>
+</tr>
+<tr>
+<td><strong>Learning/Visual</strong></td>
+<td>GSS or Dichotomous</td>
+<td>Clear behavior</td>
+</tr>
+</tbody>
+</table>
+<h3 id="95-parameter-tuning">9.5 Parameter Tuning</h3>
+<h4 id="tolerance-%CE%B5">Tolerance (ε)</h4>
+<p><strong>Default</strong>: 1e-4</p>
+<ul>
+<li><strong>1e-2</strong>: Very loose, fast (educational purposes)</li>
+<li><strong>1e-4</strong>: Standard, good balance</li>
+<li><strong>1e-6</strong>: Tight, more iterations</li>
+<li><strong>1e-10</strong>: Very tight, expensive, risk of numerical issues</li>
+</ul>
+<p><strong>Recommendation</strong>: Start at 1e-4, adjust based on convergence plot</p>
+<h4 id="max-iterations-kmax">Max Iterations (k_max)</h4>
+<p><strong>Default</strong>: 2000</p>
+<ul>
+<li><strong>100</strong>: Fast convergence (will hit limit on hard problems)</li>
+<li><strong>2000</strong>: Standard, handles most problems</li>
+<li><strong>10000</strong>: For very difficult or high-dimensional problems</li>
+</ul>
+<p><strong>Recommendation</strong>: Use default, increase only if hitting limit regularly</p>
+<h4 id="cg-variant">CG Variant</h4>
+<ul>
+<li><strong>PR+</strong> (Default): Safest, combines strengths</li>
+<li><strong>PR</strong>: Fastest but risky on non-convex</li>
+<li><strong>FR</strong>: Most stable but sometimes slower</li>
+</ul>
+<h4 id="l-bfgs-memory-size-m">L-BFGS Memory Size (m)</h4>
+<p><strong>Default</strong>: 5</p>
+<ul>
+<li><strong>m=1</strong>: Minimal memory, BFGS-like but limited</li>
+<li><strong>m=5</strong>: Standard, good balance</li>
+<li><strong>m=20</strong>: More curvature info, more memory</li>
+</ul>
+<hr>
+<h2 id="10-api-reference">10. API Reference</h2>
+<h3 id="backend-rest-api">Backend REST API</h3>
+<h4 id="base-url">Base URL</h4>
+<pre class="hljs"><code><div>https://optimization-app-wkcn.onrender.com
+</div></code></pre>
+<h4 id="endpoint-optimize">Endpoint: /optimize</h4>
+<pre class="hljs"><code><div><span class="hljs-attribute">GET /optimize?function=rosenbrock&amp;method=sd&amp;linesearch=backtracking&amp;x0=-1.0,0.0&amp;...
+</span></div></code></pre>
+<p><strong>Full Query String Format</strong>:</p>
+<pre class="hljs"><code><div>?function=&lt;string&gt;
+&amp;custom_formula=&lt;url-encoded-expression&gt;
+&amp;method=&lt;sd|cg|newton|dfp|bfgs|lbfgs&gt;
+&amp;cg_variant=&lt;FR|PR|PR_plus&gt;
+&amp;m=&lt;integer&gt;
+&amp;linesearch=&lt;backtracking|gss|dichotomous|quadratic|brent&gt;
+&amp;auto_bracket=&lt;true|false&gt;
+&amp;bracket_a=&lt;float&gt;
+&amp;bracket_b=&lt;float&gt;
+&amp;x0=&lt;comma-separated-floats&gt;
+&amp;dim_x=&lt;int&gt;
+&amp;dim_y=&lt;int&gt;
+&amp;term_criterion=&lt;gradient|step_size|f_abs|f_rel&gt;
+&amp;tol=&lt;float&gt;
+&amp;max_iter=&lt;int&gt;
+</div></code></pre>
+<p><strong>Response</strong> (Success):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"alpha_hist"</span>: [<span class="hljs-number">1.0</span>, <span class="hljs-number">0.25</span>, <span class="hljs-number">0.03125</span>, ...],
+  <span class="hljs-attr">"contour_x"</span>: [<span class="hljs-number">-6.0</span>, <span class="hljs-number">-5.919</span>, <span class="hljs-number">-5.839</span>, ..., <span class="hljs-number">2.0</span>],
+  <span class="hljs-attr">"contour_y"</span>: [<span class="hljs-number">-8.0</span>, <span class="hljs-number">-7.855</span>, <span class="hljs-number">-7.711</span>, ..., <span class="hljs-number">3.0</span>],
+  <span class="hljs-attr">"contour_z"</span>: [[<span class="hljs-number">98.5</span>, <span class="hljs-number">87.3</span>, ...], [...], ...],
+  <span class="hljs-attr">"diverged"</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">"divergence_iteration"</span>: <span class="hljs-number">0</span>,
+  <span class="hljs-attr">"divergence_reason"</span>: <span class="hljs-string">"Success"</span>,
+  <span class="hljs-attr">"f_hist"</span>: [<span class="hljs-number">181.6</span>, <span class="hljs-number">179.1</span>, <span class="hljs-number">35.0</span>, ..., <span class="hljs-number">2.2e-11</span>],
+  <span class="hljs-attr">"final_f_value"</span>: <span class="hljs-number">0.0</span>,
+  <span class="hljs-attr">"final_grad_norm"</span>: <span class="hljs-number">1.2e-5</span>,
+  <span class="hljs-attr">"full_x_hist"</span>: [[<span class="hljs-number">-0.27</span>, <span class="hljs-number">-0.9</span>], [<span class="hljs-number">-0.19</span>, <span class="hljs-number">-0.95</span>], ..., [<span class="hljs-number">3.0</span>, <span class="hljs-number">2.0</span>]],
+  <span class="hljs-attr">"grad_norm_hist"</span>: [<span class="hljs-number">24.2</span>, <span class="hljs-number">19.1</span>, <span class="hljs-number">14.5</span>, ..., <span class="hljs-number">1.2e-5</span>],
+  <span class="hljs-attr">"iterations"</span>: <span class="hljs-number">19</span>,
+  <span class="hljs-attr">"status"</span>: <span class="hljs-string">"success"</span>,
+  <span class="hljs-attr">"step_dist_hist"</span>: [<span class="hljs-number">0.15</span>, <span class="hljs-number">0.08</span>, <span class="hljs-number">0.12</span>, ..., <span class="hljs-number">0.001</span>],
+  <span class="hljs-attr">"true_min_f"</span>: <span class="hljs-number">0.0</span>,
+  <span class="hljs-attr">"true_min_full"</span>: [<span class="hljs-number">3.0</span>, <span class="hljs-number">2.0</span>],
+  <span class="hljs-attr">"x_hist"</span>: [<span class="hljs-number">-0.27</span>, <span class="hljs-number">-0.12</span>, ..., <span class="hljs-number">3.00</span>],
+  <span class="hljs-attr">"y_hist"</span>: [<span class="hljs-number">-0.9</span>, <span class="hljs-number">-0.50</span>..., <span class="hljs-number">2.00</span>]
+}
+</div></code></pre>
+<p><strong>Response</strong> (Divergence):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"alpha_hist"</span>: [<span class="hljs-number">1.0000173070317</span>, <span class="hljs-number">1.0000173070317</span>],
+  <span class="hljs-attr">"contour_x"</span>: [<span class="hljs-number">-8.36e+31</span>, <span class="hljs-number">-8.30e+31</span>, ..., <span class="hljs-number">7.60e+30</span>],
+  <span class="hljs-attr">"contour_y"</span>: [<span class="hljs-number">-1.11e+32</span>, <span class="hljs-number">-1.10e+32</span>, ..., <span class="hljs-number">1.01e+31</span>],
+  <span class="hljs-attr">"contour_z"</span>: [[<span class="hljs-number">98.5</span>, <span class="hljs-number">87.3</span>, ...], [...], ...],
+  <span class="hljs-attr">"diverged"</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">"divergence_iteration"</span>: <span class="hljs-number">2</span>,
+  <span class="hljs-attr">"divergence_reason"</span>: <span class="hljs-string">"Function value explosion (f=1.27e32)"</span>,
+  <span class="hljs-attr">"f_hist"</span>: [<span class="hljs-number">2.5</span>, <span class="hljs-number">11259193928280058</span>, <span class="hljs-number">1.267e+32</span>],
+  <span class="hljs-attr">"final_f_value"</span>: <span class="hljs-number">1.267e+32</span>,
+  <span class="hljs-attr">"final_grad_norm"</span>: <span class="hljs-number">1</span>,
+  <span class="hljs-attr">"full_x_hist"</span>: [[<span class="hljs-number">1.5</span>, <span class="hljs-number">2</span>], [<span class="hljs-number">6755516356968036</span>, <span class="hljs-number">9007355142624046</span>],
+  [<span class="hljs-number">-7.606035236984129e+31</span>, <span class="hljs-number">-1.0141380315978837e+32</span>]],
+  <span class="hljs-attr">"grad_norm_hist"</span>: [<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1</span>],
+  <span class="hljs-attr">"iterations"</span>: <span class="hljs-number">2</span>,
+  <span class="hljs-attr">"status"</span>: <span class="hljs-string">"diverged"</span>,
+  <span class="hljs-attr">"step_dist_hist"</span>: [<span class="hljs-number">11259193928280056</span>, <span class="hljs-number">1.267e+32</span>],
+  <span class="hljs-attr">"true_min_f"</span>: <span class="hljs-number">4.57e-9</span>,
+  <span class="hljs-attr">"true_min_full"</span>: [<span class="hljs-number">-3.66e-9</span>, <span class="hljs-number">2.73e-9</span>],
+  <span class="hljs-attr">"x_hist"</span>: [<span class="hljs-number">1.5</span>, <span class="hljs-number">6755516356968036</span>, <span class="hljs-number">-7.60e+31</span>],
+  <span class="hljs-attr">"y_hist"</span>: [<span class="hljs-number">2</span>, <span class="hljs-number">9007355142624046</span>, <span class="hljs-number">-1.01e+32</span>]
+}
+</div></code></pre>
+<p><strong>Response</strong> (Error):</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"error"</span>: <span class="hljs-string">"Function Error: DomainError(-0.5, sqrt will only return a complex result if called with a complex argument)"</span>
+}
+</div></code></pre>
+<h4 id="endpoint-contours">Endpoint: /contours</h4>
+<pre class="hljs"><code><div><span class="hljs-attribute">GET /contours?function=rosenbrock&amp;xmin=-2&amp;xmax=2&amp;ymin=-1&amp;ymax=3&amp;...
+</span></div></code></pre>
+<p><strong>Query Parameters</strong>:</p>
+<pre class="hljs"><code><div>?function=&lt;string&gt;
+&amp;custom_formula=&lt;url-encoded&gt;
+&amp;xmin=&lt;float&gt;
+&amp;xmax=&lt;float&gt;
+&amp;ymin=&lt;float&gt;
+&amp;ymax=&lt;float&gt;
+&amp;dim_x=&lt;int&gt;
+&amp;dim_y=&lt;int&gt;
+&amp;x0=&lt;comma-separated-floats&gt;
+</div></code></pre>
+<p><strong>Response</strong>:</p>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"contour_x"</span>: [<span class="hljs-number">-2</span>, <span class="hljs-number">-1.973</span>, <span class="hljs-number">-1.946</span>, ..., <span class="hljs-number">2</span>],
+  <span class="hljs-attr">"contour_y"</span>: [<span class="hljs-number">-1</span>, <span class="hljs-number">-0.974</span>, <span class="hljs-number">-0.948</span>, ..., <span class="hljs-number">3</span>],
+  <span class="hljs-attr">"contour_z"</span>: [
+    [<span class="hljs-number">24.01</span>, <span class="hljs-number">21.3</span>, <span class="hljs-number">18.2</span>, ..., <span class="hljs-literal">null</span>],
+    [<span class="hljs-number">23.5</span>, <span class="hljs-number">20.8</span>, <span class="hljs-number">17.6</span>, ..., <span class="hljs-literal">null</span>],
+    ...
+  ]
+}
+</div></code></pre>
+<p><strong>Grid Details</strong>:</p>
+<ul>
+<li>Resolution: 150×150</li>
+<li>Order: Row-major (row varies faster)</li>
+<li>NaN/Inf handling: Replaced with <code>null</code></li>
+<li>Domain errors: Silently omitted</li>
+</ul>
+<hr>
+<h2 id="11-infrastructure--cold-start-handling">11. Infrastructure &amp; Cold Start Handling</h2>
+<h3 id="cold-start-handling">Cold Start Handling</h3>
+<p><strong>Issue</strong>: Free tier servers sleep after 15 minutes of inactivity</p>
+<p><strong>Solution</strong>: Frontend implements cold-start detection</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">if</span> (timeSinceLastInteraction &gt; <span class="hljs-number">600000</span>) {  <span class="hljs-comment">// &gt; 10 minutes</span>
+    <span class="hljs-comment">// After 3.5 seconds, show message about server wake-up</span>
+    <span class="hljs-comment">// Expected time: up to 2 minutes</span>
+}
+</div></code></pre>
+<p><strong>User Experience</strong>:</p>
+<ul>
+<li>First request after inactivity: 30-120 seconds</li>
+<li>Subsequent requests: &lt; 1 second</li>
+<li>Message informs user of delay</li>
+</ul>
+<hr>
+<h2 id="12-file-structure-summary">12. File Structure Summary</h2>
+<pre class="hljs"><code><div>Chapter_04/
+├── backend/
+│   ├── server.jl                    # Main HTTP server, endpoints
+│   ├── Core.jl                      # Optimization framework
+│   ├── TestFunctions.jl             # 10 test functions
+│   ├── Project.toml                 # Julia dependencies
+│   ├── Manifest.toml                # Dependency lock
+│   ├── Dockerfile                   # Container definition
+│   ├── Optimizers/
+│   │   ├── SteepestDescent.jl       # First-order method
+│   │   ├── ConjugateGradient.jl     # CG (FR, PR, PR+)
+│   │   ├── NewtonMethod.jl          # Newton with Hessian
+│   │   ├── DFP.jl                   # Quasi-Newton (old)
+│   │   ├── BFGS.jl                  # Quasi-Newton (modern)
+│   │   └── LBFGS.jl                 # Limited-memory BFGS
+│   └── LineSearch/
+│       ├── Backtracking.jl          # Inexact Armijo
+│       ├── GoldenSectionSearch.jl   # Golden ratio bisection
+│       ├── DichotomousSearch.jl     # Interval halving
+│       ├── QuadraticFitSearch.jl    # Quadratic model
+│       ├── BrentsMethod.jl          # Hybrid interpolation
+│       └── Bracketing.jl            # Auto-bracketing utility
+├── frontend/
+│   ├── index.html                   # UI structure + modals
+│   ├── app.js                       # Event handlers, API calls
+│   ├── style.css                    # Responsive styling
+└── DOCUMENTATION.md                 # This file
+</div></code></pre>
+<hr>
+<h2 id="13-troubleshooting">13. Troubleshooting</h2>
+<h3 id="backend-issues">Backend Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;Module not found&quot;</td>
+<td>Dependencies missing</td>
+<td>Run <code>Pkg.instantiate()</code></td>
+</tr>
+<tr>
+<td>Port already in use</td>
+<td>Another process on :8080</td>
+<td>Kill process or change port</td>
+</tr>
+<tr>
+<td>Slow first request</td>
+<td>Cold start (production)</td>
+<td>Wait 30-120s, then instant</td>
+</tr>
+<tr>
+<td>Custom function fails</td>
+<td>Syntax error in formula</td>
+<td>Check Julia math syntax</td>
+</tr>
+<tr>
+<td>Divergence detected</td>
+<td>Poor starting point</td>
+<td>Try different x₀</td>
+</tr>
+</tbody>
+</table>
+<h3 id="frontend-issues">Frontend Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;CORS error&quot;</td>
+<td>Backend unreachable</td>
+<td>Check API_BASE_URL config</td>
+</tr>
+<tr>
+<td>Plot not rendering</td>
+<td>Plotly CDN down</td>
+<td>Check browser console</td>
+</tr>
+<tr>
+<td>Formula preview blank</td>
+<td>MathJax not loaded</td>
+<td>Refresh page</td>
+</tr>
+<tr>
+<td>Contours not updating</td>
+<td>Network issue</td>
+<td>Check network tab</td>
+</tr>
+</tbody>
+</table>
+<h3 id="algorithm-issues">Algorithm Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not converging</td>
+<td>Tolerance too tight</td>
+<td>Increase ε or k_max</td>
+</tr>
+<tr>
+<td>Zigzag trajectory</td>
+<td>Algorithm is Steepest Descent</td>
+<td>Try Newton or BFGS</td>
+</tr>
+<tr>
+<td>Divergence at iteration 1</td>
+<td>Invalid starting point</td>
+<td>Check function domain</td>
+</tr>
+<tr>
+<td>Very slow convergence</td>
+<td>Ill-conditioned problem</td>
+<td>Try different algorithm</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="14-references--resources">14. References &amp; Resources</h2>
+<h3 id="software-documentation">Software Documentation</h3>
+<ul>
+<li><a href="https://julialang.org/">Julia Language</a></li>
+<li><a href="https://juliadiff.org/ForwardDiff.jl/">ForwardDiff.jl</a></li>
+<li><a href="https://julianlsolvers.github.io/Optim.jl/">Optim.jl</a></li>
+<li><a href="https://github.com/ndortega/Oxygen.jl">Oxygen.jl</a></li>
+<li><a href="https://plotly.com/javascript/">Plotly.js</a></li>
+</ul>
+<h3 id="online-resources">Online Resources</h3>
+<ul>
+<li><a href="https://www.sfu.ca/~ssurjano/">SFU Test Functions Library</a></li>
+<li><a href="https://www.mathjax.org/">MathJax Documentation</a></li>
+<li><a href="https://render.com/docs">Render.com Deployment Guides</a></li>
+</ul>
+<hr>
+<p><strong>Document Version</strong>: 2.1
+<strong>Last Updated</strong>: April 29, 2026
+<strong>Author</strong>: Tomáš Halmazňa</p>
+
+</body>
+</html>
