@@ -29,9 +29,9 @@ f(x) = x^2 + 2x + 1
 visualize_search(f, -5.0, 5.0, 1e-4)
 """
 
-function visualize_search(f, a, b, ε; filename="dichotomous_search", fps=1)
+function visualize_search(f, a, b, ε, δ=nothing; filename="dichotomous_search", fps=1)
     # Run the optimization
-    x_min, f_min, iterations, history = dichotomous_search(f, a, b, ε)
+    x_min, f_min, iterations, history = dichotomous_search(f, a, b, ε, δ)
     
     # Create directory for PDF frames if it doesn't exist
     frames_dir = "frames"
@@ -74,11 +74,22 @@ function visualize_search(f, a, b, ε; filename="dichotomous_search", fps=1)
         f̄ = f(x̄)
         scatter!([x̄], [f̄],
                 markersize=6,
-                color=:red,
+                color=:black,
                 label=L"\bar{x}")
+                
+        # Plot points x₋ and x₊ with different markers
+        scatter!([x₋], [f₋],
+                markersize=5,
+                color=:blue,
+                marker=:utriangle,
+                label=L"x^-")
+                
+        scatter!([x₊], [f₊],
+                markersize=5,
+                color=:orange,
+                marker=:dtriangle,
+                label=L"x^+")
 
-
-        
         # Add iteration information
         interval_length = b_i - a_i
         annotate!(a, y_max + y_padding/2, 
@@ -106,15 +117,15 @@ end
 function generate_example_visualizations()
     # Example 1: Quadratic function
     f₁(x) = x^2 + 2x + 1
-    visualize_search(f₁, -5.0, 5.0, 1e-4, filename="quadratic")
+    visualize_search(f₁, -5.0, 5.0, 1e-4, 0.01, filename="quadratic")
     
     # Example 2: Fourth-degree polynomial
     f₂(x) = x^4
-    visualize_search(f₂, -2.0, 2.0, 1e-4, filename="fourth_degree")
+    visualize_search(f₂, -2.0, 2.0, 1e-4, 0.1, filename="fourth_degree")
     
     # Example 3: Exponential function
     f₃(x) = exp(x) - x
-    visualize_search(f₃, -2.0, 2.0, 1e-4, filename="exponential")
+    visualize_search(f₃, -2.0, 2.0, 1e-4, 0.1, filename="exponential")
 end
 
 # Uncomment to generate example visualizations
