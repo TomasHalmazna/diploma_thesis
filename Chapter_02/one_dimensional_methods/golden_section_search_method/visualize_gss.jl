@@ -105,11 +105,23 @@ function visualize_search(f, a, b, ε; filename="golden_section_search", fps=1)
         f̄ = f(x̄)
         scatter!([x̄], [f̄],
                 markersize=6,
-                color=:red,
+                color=:black,
             label=L"\bar{x}")
 
+        # Plot the points x₋ and x₊
+        scatter!([x₋], [f₋],
+                markersize=5,
+                color=:blue,
+                marker=:utriangle,
+                label=L"x^-")
+                
+        scatter!([x₊], [f₊],
+                markersize=5,
+                color=:orange,
+                marker=:dtriangle,
+                label=L"x^+")
+        # --------------------
 
-        
         # Add iteration information
         interval_length = b_i - a_i
         annotate!(a, y_max + y_padding/2, 
