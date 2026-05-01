@@ -31,7 +31,7 @@ p = plot(alphas, phi.(alphas),
     linewidth=2,
     grid=false,
     framestyle=:origin,
-    xlims=(-0.1, 2.1),
+    xlims=(-0.13, 2.1),
     ylims=(-0.2, 1.2),
     size=(900, 400),
     ticks=nothing,
@@ -70,23 +70,23 @@ scatter!(p, [0.0], [phi(0.0)],
 
 # 7. Annotations
 annotate!(p, [
-    (alpha_max - 0.15, -0.15, text(L"\alpha", 12, :black, :right)),
+    (alpha_max - 0.15, -0.15, text(L"\alpha_k", 12, :black, :right)),
     (0.05, 1.15, text(L"y", 12, :black, :left)),
     (-0.05, -0.1, text(L"0", 12, :black, :right)),
 
     # Function label
-    (1.08, 1.19, text(L"f(x + \alpha d)", 12, :black, :left)),
+    (1.08, 1.19, text(L"f(x_k + \alpha_k d_k)", 12, :black, :left)),
     
     # Point x label
-    (-0.03, 1.02, text(L"f(x)", 12, :black, :right)),
+    (-0.03, 1.02, text(L"f(x_k)", 12, :black, :right)),
     
     # Tangent line label
-    (0.35, 0.2, text(L"f(x) + \alpha \nabla f^T d", 10, :grey, :left)),
+    (0.35, 0.2, text(L"f(x_k) + \alpha_k \nabla f(x_k)^T d_k", 10, :grey, :left)),
     
     # Armijo line label (with beta)
-    (0.9, 0.95, text(L"f(x) + \beta \alpha \nabla f^T d", 10, color_armijo_line, :left)),
+    (0.85, 0.95, text(L"f(x_k) + \beta \alpha_k \nabla f(x_k)^T d_k", 10, color_armijo_line, :left)),
     
-    # Sufficient decrease label (bold blue)
+    # Sufficient decrease label (bold red)
     (1.1, 0.35, text(L"\mathbf{sufficient\ decrease}", 11, color_armijo, :center))
 ])
 

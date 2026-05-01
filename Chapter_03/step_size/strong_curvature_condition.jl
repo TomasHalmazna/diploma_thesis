@@ -21,8 +21,8 @@ color_tangent = RGB(0.0, 0.6, 0.9)
 # 4. Create base plot
 p2 = plot(alphas, phi.(alphas), 
     label=nothing, color=color_func, linewidth=1.5,
-    grid=false, framestyle=:origin, xlims=(-0.1, 2.1), ylims=(-0.2, 1.2),
-    size=(680, 480), ticks=nothing, arrow=true, legend=(0.15, 0.30), 
+    grid=false, framestyle=:origin, xlims=(-0.16, 2.1), ylims=(-0.2, 1.2),
+    size=(680, 480), ticks=nothing, arrow=true, legend=(0.17, 0.30), 
     legendfontsize=10, foreground_color_legend=:black, legend_background_color=:white
 )
 
@@ -38,7 +38,7 @@ plot!(p2, alphas, y_strong,
 
 # Draw the threshold lines (dashed) - LOWER AND UPPER BOUNDS
 plot!(p2, alphas, phi(0.0) .+ alphas .* (sigma * slope0), 
-    label=raw"Threshold slopes: $\pm \sigma \nabla f(x)^T d$", 
+    label=raw"Threshold slopes: $\pm \sigma \nabla f(x_k)^T d_k$", 
     color=color_tangent, linestyle=:dash, linewidth=1.5
 )
 plot!(p2, alphas, phi(0.0) .+ alphas .* (-sigma * slope0), 
@@ -54,7 +54,7 @@ function plot_tangent!(p, a, color; len=0.35, lab=nothing)
 end
 
 # Draw tangets in specific points representing different states
-plot_tangent!(p2, 0.0, color_tangent, len=0.4, lab=raw"Local slopes: $\nabla f(x + \alpha d)^T d$")    
+plot_tangent!(p2, 0.0, color_tangent, len=0.4, lab=raw"Local slopes: $\nabla f(x_k + \alpha_k d_k)^T d_k$")    
 plot_tangent!(p2, 0.35, color_tangent)
 plot_tangent!(p2, 0.74, color_tangent)
 plot_tangent!(p2, 1.15, color_tangent)
@@ -64,11 +64,11 @@ scatter!(p2, [0.0], [phi(0.0)], label=nothing, color=:black, markersize=5)
 
 # 7. Annotations
 annotate!(p2, [
-    (alpha_max - 0.15, -0.15, text(L"\alpha", 12, :black, :right)),
+    (alpha_max - 0.15, -0.15, text(L"\alpha_k", 12, :black, :right)),
     (0.05, 1.15, text(L"y", 12, :black, :left)),
     (-0.05, -0.1, text(L"0", 12, :black, :right)),
-    (1.08, 1.19, text(L"f(x + \alpha d)", 12, :black, :left)),
-    (-0.03, 0.98, text(L"f(x)", 12, :black, :right))
+    (1.08, 1.19, text(L"f(x_k + \alpha_k d_k)", 12, :black, :left)),
+    (-0.03, 0.98, text(L"f(x_k)", 12, :black, :right))
 ])
 
 display(p2)
