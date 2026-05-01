@@ -146,7 +146,7 @@ function visualize_quadratic_search(f, f_expr::String, a_init, b_init, N; filena
     # Create frames and save PDFs
     frames = []
     
-    for i in 1:length(history)
+for i in 1:length(history)
         a_i, γ_i, b_i, y_a, y_γ, y_b, x_est, y_est, p0, p1, p2, is_valid_step = history[i]
         
         # The fitted quadratic polynomial
@@ -162,9 +162,15 @@ function visualize_quadratic_search(f, f_expr::String, a_init, b_init, N; filena
                  ylabel=L"f(x)",
                  ylims=y_lims,
                  legend=(0.77, 0.95)) 
+                 
+        # Plot current bracketing interval
+        plot!(p, [a_i, b_i], [y_min - y_padding/2, y_min - y_padding/2], 
+              linewidth=3, 
+              color=:red,
+              label=L"Search\ Interval")
         
         # Plot the interpolating parabola
-        plot!(x_range_init, P.(x_range_init), 
+        plot!(p, x_range_init, P.(x_range_init), 
               linewidth=2, 
               linestyle=:dash,
               color=:darkorange,
@@ -186,17 +192,17 @@ function visualize_quadratic_search(f, f_expr::String, a_init, b_init, N; filena
                       markerstrokecolor=:black,
                       label=L"\bar{x}")
              # Mark the y_est line
-             plot!([x_est, x_est], [y_lims[1], y_est], linestyle=:dot, color=:red, linewidth=1, label=false)
+             plot!(p, [x_est, x_est], [y_lims[1], y_est], linestyle=:dot, color=:red, linewidth=1, label=false)
 
         else
-             annotate!(a_init, y_lims[2] - y_padding/1.5, 
+             annotate!(p, a_init, y_lims[2] - y_padding/1.5, 
                        text(L"Algorithm\ Terminated:\ \bar{x}\ was\ outside\ [a,b]",
                             :left, 10, :red))
         end
         
         # Add iteration information
         interval_length = b_i - a_i
-        annotate!(a_init, y_lims[2] - y_padding/3,
+        annotate!(p, a_init, y_lims[2] - y_padding/3,
                   text(L"Current\ Interval\ Length:\ %$(round(interval_length, digits=6))",
                        :left, 10))
         
