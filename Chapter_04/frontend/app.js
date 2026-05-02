@@ -32,8 +32,8 @@ function showLoading(baseText) {
             loadingText.innerHTML = `${baseText}<br><br>
                 <span style="font-size: 14px; color: #005A9E; font-weight: normal; max-width: 400px; display: inline-block; margin-top: 10px; line-height: 1.4;">
                     ☕ <b>Waking up the server...</b><br>
-                    Since this is hosted on a free tier, the backend goes to sleep after inactivity. 
-                    This initial start may take <b>up to 2 minutes</b>. Subsequent requests will be instant!
+                    Since this application is hosted on a free tier, the backend goes to sleep after inactivity. 
+                    This initial start may take <b>up to 3 minutes</b>. Subsequent requests will be instant!
                 </span>`;
         }, 3500);
     }
