@@ -1,17 +1,15 @@
-// app.js
-
 const functionSelect = document.getElementById('functionSelect');
 const dimInput = document.getElementById('dimInput');
 const x0Inputs = document.getElementById('x0Inputs');
 const axisX = document.getElementById('axisX');
 const axisY = document.getElementById('axisY');
 const plotDiv = document.getElementById('plotDiv');
-const API_BASE_URL = "https://optimization-app-wkcn.onrender.com"; // backend server url
+const API_BASE_URL = "https://optimization-app-wkcn.onrender.com";
 let debounceTimer;
 
 // --- COLD-START detection ---
 let coldStartTimer;
-let lastServerInteraction = 0; // Čas posledního úspěšného spojení (v milisekundách)
+let lastServerInteraction = 0; // Time of last successful connection (in milliseconds)
 
 function showLoading(baseText) {
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -42,12 +40,9 @@ function showLoading(baseText) {
 function hideLoading() {
     clearTimeout(coldStartTimer);
     document.getElementById('loadingOverlay').classList.remove('active');
-    // Reset the timer of interaction after a successful response
     lastServerInteraction = Date.now();
 }
-// ---------------------------------------------
 
-// Global configuration for SVG export
 const getSvgConfig = (fileName) => ({
     toImageButtonOptions: {
         format: 'svg',
@@ -138,7 +133,7 @@ function attachRelayoutListener() {
     plotDiv.on('plotly_relayout', function(eventdata) {
         if (!eventdata['xaxis.range[0]'] && !eventdata['xaxis.range'] && !eventdata['xaxis.autorange'] &&
             !eventdata['yaxis.range[0]'] && !eventdata['yaxis.range'] && !eventdata['yaxis.autorange']) {
-            return; 
+            return;
         }
 
         clearTimeout(debounceTimer);
@@ -276,7 +271,7 @@ function enlargePlot(divId, title) {
     const layoutCopy = JSON.parse(JSON.stringify(sourceLayout));
     layoutCopy.margin = {t: 20, b: 60, l: 80, r: 20};
     
-    // Přidáno getSvgConfig pro zvětšené okno
+    // Added getSvgConfig for enlarged window
     Plotly.newPlot('enlargedPlotDiv', sourceData, layoutCopy, getSvgConfig(`enlarged_${title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`));
     window.addEventListener('resize', resizeEnlargedPlot);
 }

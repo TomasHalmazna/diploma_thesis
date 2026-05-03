@@ -40,7 +40,7 @@ function run_cg_detailed_analysis(f, ∇f, x0; max_iter=2000, tol=1e-4)
     x = copy(x0)
     
     x_hist = [copy(x)]
-    alpha_hist = Float64[] # Změna: tracking alpha
+    alpha_hist = Float64[] # Change: tracking alpha
     desc_hist = [dot(∇f(x), -∇f(x))] 
     grad_norm_hist = [norm(∇f(x))]
     
@@ -77,7 +77,7 @@ function run_cg_detailed_analysis(f, ∇f, x0; max_iter=2000, tol=1e-4)
         res = golden_section_search(h, 0.0, 3.0; tol=1e-8)
         alpha = res.xmin
         
-        push!(alpha_hist, alpha) # Uložení alpha
+        push!(alpha_hist, alpha) # Storing alpha
         
         x = x + alpha * d
         push!(x_hist, copy(x))
@@ -112,11 +112,11 @@ p1 = contour(x_range, y_range, Z, levels=10 .^ range(-1, 3.5, length=40),
 plot!(p1, X_hist, Y_hist, color=:red, lw=2, marker=:circle, ms=4)
 scatter!(p1, [X_hist[1]], [Y_hist[1]], color=:blue, ms=6)
 
-# Plot 2: Alpha values (Změněno!)
+# Plot 2: Alpha values (Changed!)
 p2 = plot(1:length(alpha_hist), alpha_hist,
           title=L"Step Size $\alpha_k$", color=:darkorange, lw=2, legend=false,
           xlabel=L"Iteration $k$", ylabel=L"$\alpha_k$")
-hline!(p2, [3.0], color=:red, ls=:dash, label="Upper Bound") # Zobrazení limitu
+hline!(p2, [3.0], color=:red, ls=:dash, label="Upper Bound") # Display limit
 
 # Plot 3: Descent Condition g^T d
 p3 = plot(0:(length(desc_hist)-1), symlog.(desc_hist), 

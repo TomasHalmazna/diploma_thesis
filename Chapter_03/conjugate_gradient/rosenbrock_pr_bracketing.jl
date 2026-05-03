@@ -36,13 +36,13 @@ end
 
 symlog(x) = sign(x) * log10(1.0 + abs(x))
 
-# --- Nová funkce pro Bracketing ---
+# --- New function for Bracketing ---
 function bracket_minimum(h, a=0.0, initial_step=1e-4, expansion=2.0, max_iter=50)
     f_a = h(a)
     b = a + initial_step
     f_b = h(b)
     
-    # Pokud už první krok zhoršil funkci, minimum je velmi blízko nuly
+    # If the first step already worsened the function, the minimum is very close to zero
     if f_b > f_a
         return 0.0, b
     end
@@ -52,14 +52,14 @@ function bracket_minimum(h, a=0.0, initial_step=1e-4, expansion=2.0, max_iter=50
     
     for _ in 1:max_iter
         if f_c > f_b
-            return a, c # Minimum ohraničeno
+            return a, c # Minimum is bracketed
         end
         a, f_a = b, f_b
         b, f_b = c, f_c
         c = b + expansion * (b - a)
         f_c = h(c)
     end
-    return a, c # Fallback, pokud nenajde
+    return a, c # Fallback if not found
 end
 # ----------------------------------
 
