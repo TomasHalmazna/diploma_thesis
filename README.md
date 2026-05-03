@@ -27,22 +27,18 @@ This repository contains a comprehensive master's thesis on numerical optimizati
   - `golden_section_search.jl` - Core implementation of the golden section search algorithm
   - `test_gss.jl` - Unit tests and validation
   - `visualize_gss.jl` - Algorithm visualization with frame generation
-  - Ratio illustration and visualization frames
 
 - **Dichotomous Search** (`dichotomous_search_method/`)
   - `dichotomous_search_method.jl` - Implementation of dichotomous (bisection) search
   - `visualize_dichotomous_search.jl` - Step-by-step visualization
-  - Test suite and frame generation
 
 - **Brent's Method** (`brents_method/`)
   - `brents_method.jl` - Robust root-finding algorithm combining bisection, secant, and inverse quadratic interpolation
   - `visualize_brents_method.jl` - Comprehensive visualization framework
-  - Edge case demonstrations and initialization configuration
   - Multiple frame sequences for asymmetric, concave, and oscillating function behaviors
 
 - **Quadratic Fit Search** (`quadratic_fit_search/`)
   - `qfs_example_frames/` - Visualization of quadratic approximation
-  - Edge case analysis and stress testing
 
 ### Chapter 03: Multivariate Optimization
 
@@ -73,8 +69,8 @@ This repository contains a comprehensive master's thesis on numerical optimizati
 
 - `backtracking.jl` - Backtracking line search
 - `ArmijoConditions.jl` - Armijo sufficient decrease condition
-- `curvature_condition.jl` - Strong Wolfe curvature condition
-- `strong_curvature_condition.jl` - Strong curvature condition implementation
+- `curvature_condition.jl` - Wolfe curvature condition
+- `strong_curvature_condition.jl` - Strong Wolfe curvature condition
 - `step_size_decay_diff.jl` - Comparative analysis of step size decay strategies
 - `OptimizationSkelet.jl` - Generic optimization framework
 - `backtracking_example.jl` - Practical backtracking demonstration
@@ -130,39 +126,15 @@ This repository contains a comprehensive master's thesis on numerical optimizati
 
 **Features:**
 
-- Interactive selection of 10+ test functions or custom function input
+- Interactive selection of 10 test functions or custom function input
 - 6 multivariate optimization methods with variants
 - 5 line search strategies with configurable parameters
 - 2D contour plot visualization of optimization trajectories
 - Real-time convergence monitoring (function value, gradient norm, step size, distance)
 - Comparison against reference optimization results
-- Parameter sweep and sensitivity analysis capabilities
 
-## Technical Details
 
-### Algorithms Covered
-
-**One-Dimensional Optimization:**
-- Golden Section Search
-- Dichotomous Search
-- Brent's Method
-- Quadratic Fit Search
-
-**Line Search Methods:**
-- Backtracking with Armijo condition
-- Bracketing phase (to establish bounded interval)
-- Strong Wolfe curvature condition
-- Step size decay strategies
-
-**Multivariate Optimization:**
-- Steepest Descent (Gradient Descent)
-- Newton's Method (second-order, with damping)
-- Conjugate Gradient (Fletcher-Reeves, Polak-Ribiière)
-- BFGS (Broyden-Fletcher-Goldfarb-Shanno)
-- DFP (Davidon-Fletcher-Powell)
-- L-BFGS (Limited-memory BFGS)
-
-### Test Functions
+## Test Functions
 
 The implementation includes standard benchmark functions used in optimization literature:
 - Rosenbrock function
@@ -197,65 +169,7 @@ diploma_thesis/
 └── README.md                # This file
 ```
 
-## Usage
-
-### Educational Content
-
-Navigate to the respective chapter directories to explore:
-- Jupyter notebooks for conceptual understanding
-- Julia implementations for algorithm details
-- Visualization scripts for step-by-step algorithm execution
-
-### Interactive Visualizer
-
-1. **Setup Backend:**
-   ```julia
-   cd Chapter_04/backend
-   julia server.jl
-   ```
-
-2. **Access Frontend:**
-   - Open `Chapter_04/frontend/index.html` in a web browser
-   - Or use the Docker container for deployment
-
-3. **Experimentation:**
-   - Select optimization method and line search strategy
-   - Configure algorithm parameters
-   - Visualize convergence behavior on test functions
-   - Compare different algorithmic approaches
-
-## Docker Support
-
-The backend includes Docker containerization for deployment:
-- `Dockerfile` - Container configuration
-- `Project.toml` / `Manifest.toml` - Julia dependency management
-
 ## Documentation
 
 - `Chapter_04/DOCUMENTATION.md` - Comprehensive API reference and architecture details
 - Inline code comments throughout implementations
-
-## Dependencies
-
-### Julia Packages
-
-- Optim.jl - Reference optimization library for validation
-- HTTP.jl - Web server functionality
-- Additional standard Julia libraries (Statistics, LinearAlgebra, etc.)
-
-### Frontend
-
-- KaTeX (for mathematical notation rendering)
-- Standard HTML5/CSS3/JavaScript (no external dependencies required)
-
-## Academic Context
-
-This thesis explores the theory, implementation, and practical application of numerical optimization algorithms. It progresses from fundamental concepts through classical methods to modern variants, providing both theoretical foundation and interactive educational tools for understanding algorithm behavior on various problem classes.
-
-## License
-
-This work is provided as academic material for educational and research purposes.
-
----
-
-**Last Updated:** 2024
