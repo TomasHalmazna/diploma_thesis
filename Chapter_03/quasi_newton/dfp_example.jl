@@ -2,7 +2,7 @@ using LinearAlgebra
 using Plots
 
 # Import required modules
-include(joinpath(@__DIR__, "..", "step_size", "backtracking.jl"))
+include(joinpath(@__DIR__, "..", "..", "Chapter_02", "one_dimensional_methods", "golden_section_search_method", "golden_section_search.jl"))
 include("dfp.jl")
 
 # Rosenbrock function and its exact gradient
@@ -33,7 +33,10 @@ function run_dfp_experiment(x0; max_iter=200, tol=1e-5)
         d = compute_direction(method, state)
         
         # 2. Line search
-        alpha = backtracking_search(f_rosen, ∇f_rosen, state.x, d, 1.0)
+        h(α) = f_rosen(state.x + α * d)
+        bracket_start, bracket_end = bracket_minimum(h)
+        res = golden_section_search(h, bracket_start, bracket_end; tol=1e-8)
+        alpha = res.xmin
         
         # 3. Take step to new point
         x_next = state.x + alpha * d

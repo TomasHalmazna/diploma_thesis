@@ -1,7 +1,7 @@
 using LinearAlgebra
 using Plots
 
-include(joinpath(@__DIR__, "..", "step_size", "backtracking.jl"))
+include(joinpath(@__DIR__, "..", "..", "Chapter_02", "one_dimensional_methods", "golden_section_search_method", "golden_section_search.jl"))
 include("bfgs.jl")
 
 f_rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
@@ -28,7 +28,10 @@ function run_bfgs_experiment(x0; max_iter=200, tol=1e-5)
         end
         
         d = compute_direction(method, state)
-        alpha = backtracking_search(f_rosen, ∇f_rosen, state.x, d, 1.0)
+        h(α) = f_rosen(state.x + α * d)
+        bracket_start, bracket_end = bracket_minimum(h)
+        res = golden_section_search(h, bracket_start, bracket_end; tol=1e-8)
+        alpha = res.xmin
         x_next = state.x + alpha * d
         g_next = ∇f_rosen(x_next)
         
