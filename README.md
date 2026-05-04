@@ -1,5 +1,7 @@
 # Diploma Thesis: Numerical Optimization Algorithms
 
+Note: to run the web-based version of the app, Visit https://tomashalmazna.github.io/diploma_thesis/Chapter_04/frontend/index.html
+
 ## Overview
 
 This repository contains a comprehensive master's thesis on numerical optimization algorithms, spanning from foundational concepts to advanced methods and practical implementations. The project includes theoretical analysis, educational notebooks, algorithm implementations in Julia, and an interactive web-based visualization platform.
